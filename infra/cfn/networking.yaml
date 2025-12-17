@@ -82,7 +82,7 @@ Resources:
       VpcId: !Ref Vpc
       AvailabilityZone: !Select [3, !GetAZs ""]
       CidrBlock: !Select
-        - 2
+        - 3
         - !Cidr
           - !Ref VpcCidr
           - 4
