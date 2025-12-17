@@ -40,7 +40,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub "${NamePrefix}-private-subnet-1"
+          Value: !Sub "${App}-private-subnet-1"
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -56,7 +56,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub "${Name}-subnet-private-2"
+          Value: !Sub "${App}-subnet-private-2"
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -72,7 +72,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "${Name}-subnet-public-1"
+          Value: !Sub "${App}-subnet-public-1"
         - Key: kubernetes.io/role/elb
           Value: 1
 
@@ -90,7 +90,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "${Name}-subnet-public-2"
+          Value: !Sub "${App}-subnet-public-2"
         - Key: kubernetes.io/role/elb
           Value: 1
   
