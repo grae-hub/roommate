@@ -12,7 +12,7 @@ Parameters:
 
   SubnetCidrBits:
     Type: Number
-    Default: 2
+    Default: 14
     Description: bits to add to subnet mask
 
 Resources:
