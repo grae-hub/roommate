@@ -16,6 +16,7 @@ Parameters:
     Description: bits to add to subnet mask
 
 Resources:
+  # vpc
   Vpc:
     Type: AWS::EC2::VPC
     Properties:
@@ -26,6 +27,7 @@ Resources:
         - Key: Name
           Value: !Sub "${App}-vpc"
 
+  # subnets
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -80,7 +82,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [3, !GetAZs ""]
+      AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: !Select
         - 3
         - !Cidr
@@ -93,7 +95,8 @@ Resources:
           Value: !Sub "${App}-subnet-public-2"
         - Key: kubernetes.io/role/elb
           Value: 1
-  
+
+  # igw
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -107,6 +110,7 @@ Resources:
       VpcId: !Ref Vpc
       InternetGatewayId: !Ref InternetGateway
   
+  # route tables
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
