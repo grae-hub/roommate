@@ -36,8 +36,8 @@ jobs:
 
     env:
       AWS_REGION: ap-southeast-2
-      NETWORKING_STACK_NAME: roommate-networking
-      EKS_STACK_NAME: roommate-eks
+      NETWORKING_STACK_NAME: roommate-networking-${{ vars.ENV_SHORTHAND }}
+      EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
 
     steps:
       - name: deploy networking cfn
