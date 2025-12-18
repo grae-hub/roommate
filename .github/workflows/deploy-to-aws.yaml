@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "infra/cfn/networking.yaml"
+      - "infra/cfn/eks.yaml"
       - ".github/workflows/deploy-networking-cfn.yml"
   workflow_dispatch:
 
@@ -19,7 +20,8 @@ jobs:
 
     env:
       AWS_REGION: ap-southeast-2
-      STACK_NAME: eks-networking
+      NETWORKING_STACK_NAME: roommate-networking
+      EKS_STACK_NAME: roommate-eks
 
     steps:
       - name: checkout
@@ -31,16 +33,30 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: validate cfn
+      - name: validate networking cfn
         run: |
           aws cloudformation validate-template \
             --template-body file://infra/cfn/networking.yaml
 
-      - name: deploy cfn
+      - name: deploy networking cfn
         run: |
           aws cloudformation deploy \
-            --stack-name "${STACK_NAME}" \
+            --stack-name "${NETWORKING_STACK_NAME}" \
             --template-file infra/cfn/networking.yaml \
             --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset
+      
+      - name: validate eks cfn
+        run: |
+          aws cloudformation validate-template \
+            --template-body file://infra/cfn/eks.yaml
+
+      - name: deploy eks cfn
+        run: |
+          aws cloudformation create-stack \
+            --stack-name "${EKS_STACK_NAME}" \
+            --template-file infra/cfn/eks.yaml \
+            --region "${AWS_REGION}" \
             --no-fail-on-empty-changeset \
-            --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameters ParameterKey=NetworkStackName,ParameterValue="${NETWORKING_STACK_NAME}"
