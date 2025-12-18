@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - develop
     paths:
       - "infra/cfn/networking.yaml"
       - "infra/cfn/eks.yaml"
@@ -15,9 +16,22 @@ permissions:
   contents: read
 
 jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.set-env.outputs.env }}
+    steps:
+      - name: Determine environment
+        id: set-env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+          else
+            echo "env=development" >> $GITHUB_OUTPUT
+          fi
   deploy:
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ needs.set-env.outputs.env }}
 
     env:
       AWS_REGION: ap-southeast-2
@@ -50,4 +64,5 @@ jobs:
             --region "${AWS_REGION}" \
             --no-fail-on-empty-changeset \
             --capabilities CAPABILITY_NAMED_IAM \
-            --parameter-overrides NetworkStackName="${NETWORKING_STACK_NAME}"
+            --parameter-overrides \
+              NetworkStackName="${NETWORKING_STACK_NAME}" \

@@ -6,6 +6,13 @@ Parameters:
     Type: String
     Default: roommate
 
+  Env:
+    Type: String
+    AllowedValues:
+      - Prod
+      - Dev
+    Default: Dev
+
   NetworkStackName:
     Type: String
     Description: name of the network stack
@@ -20,7 +27,7 @@ Parameters:
 
   NodeDesiredSize:
     Type: Number
-    Default: 2
+    Default: 1
 
   NodeMinSize:
     Type: Number
@@ -28,14 +35,14 @@ Parameters:
 
   NodeMaxSize:
     Type: Number
-    Default: 4
+    Default: 2
 
 Resources:
   # iam roles
   EksClusterRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${App}-eks-cluster-role"
+      RoleName: !Sub "${App}-eks-cluster-role-${Env}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -49,7 +56,7 @@ Resources:
   NodeInstanceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${App}-node-role"
+      RoleName: !Sub "${App}-node-role-${Env}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -66,7 +73,7 @@ Resources:
   EksCluster:
     Type: AWS::EKS::Cluster
     Properties:
-      Name: !Sub "${App}-eks-cluster"
+      Name: !Sub "${App}-eks-cluster-${Env}"
       Version: !Ref KubernetesVersion
       RoleArn: !GetAtt EksClusterRole.Arn
       ResourcesVpcConfig:
@@ -83,7 +90,7 @@ Resources:
     Type: AWS::EKS::Nodegroup
     Properties:
       ClusterName: !Ref EksCluster
-      NodegroupName: !Sub "${App}-eks-node-group"
+      NodegroupName: !Sub "${App}-eks-node-group-${Env}"
       NodeRole: !GetAtt NodeInstanceRole.Arn
       Subnets:
         - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
