@@ -111,7 +111,12 @@ Resources:
       InternetGatewayId: !Ref InternetGateway
 
   # nat
-  NatEip:
+  NatEip1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  
+  NatEip2:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
@@ -119,7 +124,7 @@ Resources:
   NatGateway1:
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt NatEip.AllocationId
+      AllocationId: !GetAtt NatEip1.AllocationId
       SubnetId: !Ref PublicSubnet1
       ConnectivityType: public
       Tags:
@@ -129,7 +134,7 @@ Resources:
   NatGateway2:
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt NatEip.AllocationId
+      AllocationId: !GetAtt NatEip2.AllocationId
       SubnetId: !Ref PublicSubnet2
       ConnectivityType: public
       Tags:
