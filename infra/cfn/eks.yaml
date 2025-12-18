@@ -83,7 +83,7 @@ Resources:
     Type: AWS::EKS::Nodegroup
     Properties:
       ClusterName: !Ref EksCluster
-      NodegroupName: !Sub "${ClusterName}-eks-node-group"
+      NodegroupName: !Sub "${App}-eks-node-group"
       NodeRole: !GetAtt NodeInstanceRole.Arn
       Subnets:
         - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
