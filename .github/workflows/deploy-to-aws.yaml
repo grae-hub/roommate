@@ -30,6 +30,7 @@ jobs:
             echo "env=development" >> $GITHUB_OUTPUT
           fi
   deploy:
+    needs: set-env
     runs-on: ubuntu-latest
     environment: ${{ needs.set-env.outputs.env }}
 
