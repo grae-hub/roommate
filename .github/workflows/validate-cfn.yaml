@@ -8,6 +8,10 @@ on:
       - "infra/cfn/**"
   workflow_dispatch:
 
+permissions:
+    id-token: write
+    contents: read
+
 jobs:
   validate-cloudformation:
     runs-on: ubuntu-latest
