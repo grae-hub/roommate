@@ -39,6 +39,9 @@ jobs:
       EKS_STACK_NAME: roommate-eks
 
     steps:
+      - name: deploy networking cfn
+        run: echo ${{ needs.set-env.outputs.env }}
+
       - name: checkout
         uses: actions/checkout@v4
 
