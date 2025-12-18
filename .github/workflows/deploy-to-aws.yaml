@@ -50,4 +50,4 @@ jobs:
             --region "${AWS_REGION}" \
             --no-fail-on-empty-changeset \
             --capabilities CAPABILITY_NAMED_IAM \
-            --parameter-overrides ParameterKey=NetworkStackName,ParameterValue="${NETWORKING_STACK_NAME}"
+            --parameter-overrides NetworkStackName="${NETWORKING_STACK_NAME}"
