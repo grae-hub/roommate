@@ -44,7 +44,7 @@ jobs:
 
       - name: deploy eks cfn
         run: |
-          aws cloudformation create-stack \
+          aws cloudformation deploy \
             --stack-name "${EKS_STACK_NAME}" \
             --template-file infra/cfn/eks.yaml \
             --region "${AWS_REGION}" \
