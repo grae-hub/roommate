@@ -71,10 +71,10 @@ Resources:
       RoleArn: !GetAtt EksClusterRole.Arn
       ResourcesVpcConfig:
         SubnetIds:
-          - !ImportValue !Sub "${NetworkStackName}-PrivateSubnet1Id"
-          - !ImportValue !Sub "${NetworkStackName}-PrivateSubnet2Id"
-          - !ImportValue !Sub "${NetworkStackName}-PublicSubnet1Id"
-          - !ImportValue !Sub "${NetworkStackName}-PublicSubnet2Id"
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PublicSubnet1Id"
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PublicSubnet2Id"
         EndpointPublicAccess: true
         EndpointPrivateAccess: true
 
@@ -83,11 +83,11 @@ Resources:
     Type: AWS::EKS::Nodegroup
     Properties:
       ClusterName: !Ref EksCluster
-      NodegroupName: !Sub "${ClusterName}-eks-node-group"
+      NodegroupName: !Sub "${App}-eks-node-group"
       NodeRole: !GetAtt NodeInstanceRole.Arn
       Subnets:
-        - !ImportValue !Sub "${NetworkStackName}-PrivateSubnet1Id"
-        - !ImportValue !Sub "${NetworkStackName}-PrivateSubnet2Id"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
       InstanceTypes:
         - !Ref NodeInstanceType
       ScalingConfig:
