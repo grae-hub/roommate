@@ -19,7 +19,7 @@ Parameters:
 
   KubernetesVersion:
     Type: String
-    Default: "1.33"
+    Default: "1.32"
 
   NodeInstanceType:
     Type: String
