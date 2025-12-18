@@ -58,7 +58,10 @@ jobs:
             --stack-name "${NETWORKING_STACK_NAME}" \
             --template-file infra/cfn/networking.yaml \
             --region "${AWS_REGION}" \
-            --no-fail-on-empty-changeset
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              Env="${{ vars.ENV_SHORTHAND }}" \
+              VpcCidr="${{ vars.VPC_CIDR }}"
 
       - name: deploy eks cfn
         run: |
@@ -69,4 +72,16 @@ jobs:
             --no-fail-on-empty-changeset \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
-              NetworkStackName="${NETWORKING_STACK_NAME}" \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            NetworkStackName="${NETWORK_STACK_NAME}" \
+            NodeInstanceType="${{ vars.NODE_INSTANCE_TYPE }}" \
+            NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
+            NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
+            NodeMaxSize="${{ vars.NODE_MAX_SIZE }}"
+
+            ENV_SHORTHAND
+            VPC_CIDR
+            NODE_INSTANCE_TYPE
+            NODE_DESIRED_SIZE
+            NODE_MIN_SIZE
+            NODE_MAX_SIZE
