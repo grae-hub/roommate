@@ -9,9 +9,9 @@ Parameters:
   Env:
     Type: String
     AllowedValues:
-      - Prod
-      - Dev
-    Default: Dev
+      - prod
+      - dev
+    Default: dev
 
   VpcCidr:
     Type: String
@@ -23,7 +23,7 @@ Parameters:
     Description: bits to add to subnet mask
 
 Conditions:
-  IsProd: !Equals [!Ref Env, "Prod"]
+  IsProd: !Equals [!Ref Env, "prod"]
 
 Resources:
   # vpc
