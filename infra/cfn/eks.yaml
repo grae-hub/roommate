@@ -9,9 +9,9 @@ Parameters:
   Env:
     Type: String
     AllowedValues:
-      - Prod
-      - Dev
-    Default: Dev
+      - prod
+      - dev
+    Default: dev
 
   NetworkStackName:
     Type: String
@@ -38,7 +38,7 @@ Parameters:
     Default: 2
 
 Conditions:
-  IsProd: !Equals [!Ref Env, "Prod"]
+  IsProd: !Equals [!Ref Env, "prod"]
 
 Resources:
   # iam roles
@@ -100,9 +100,13 @@ Resources:
       ClusterName: !Ref EksCluster
       NodegroupName: !Sub "${App}-eks-node-group-${Env}"
       NodeRole: !GetAtt NodeInstanceRole.Arn
-      Subnets:
-        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
-        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
+      Subnets: !If
+          - IsProd
+          -
+            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
+            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
+          -
+            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
       InstanceTypes:
         - !Ref NodeInstanceType
       ScalingConfig:
