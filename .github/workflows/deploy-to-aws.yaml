@@ -73,7 +73,7 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
             Env="${{ vars.ENV_SHORTHAND }}" \
-            NetworkStackName="${NETWORK_STACK_NAME}" \
+            NetworkStackName="${NETWORKING_STACK_NAME}" \
             NodeInstanceType="${{ vars.NODE_INSTANCE_TYPE }}" \
             NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
             NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
