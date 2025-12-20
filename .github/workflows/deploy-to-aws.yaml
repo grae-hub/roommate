@@ -78,10 +78,3 @@ jobs:
             NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
             NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
             NodeMaxSize="${{ vars.NODE_MAX_SIZE }}"
-
-            ENV_SHORTHAND
-            VPC_CIDR
-            NODE_INSTANCE_TYPE
-            NODE_DESIRED_SIZE
-            NODE_MIN_SIZE
-            NODE_MAX_SIZE
