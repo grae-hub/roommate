@@ -42,6 +42,7 @@ Conditions:
 
 Resources:
   # iam roles
+  # haley
   EksClusterRole:
     Type: AWS::IAM::Role
     Properties:
