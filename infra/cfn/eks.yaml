@@ -116,7 +116,7 @@ Resources:
       AmiType: AL2_x86_64
 
   # oidc provider
-  ClusterOIDCProvider:
+  ClusterOidcProvider:
     Type: AWS::IAM::OIDCProvider
     Properties:
       Url: !GetAtt EksCluster.OpenIdConnectIssuerUrl
