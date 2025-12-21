@@ -115,12 +115,42 @@ Resources:
         MaxSize: !Ref NodeMaxSize
       AmiType: AL2_x86_64
 
+  # oidc provider
+  ClusterOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: !GetAtt EksCluster.OpenIdConnectIssuerUrl
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 9e99a48a9960b14926bb7f3b02e22da2b0ab7280
+
 Outputs:
   ClusterName:
     Value: !Ref EksCluster
+    Export:
+      Name: !Sub "${AWS::StackName}-ClusterName"
   ClusterArn:
     Value: !GetAtt EksCluster.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ClusterArn"
   ClusterEndpoint:
     Value: !GetAtt EksCluster.Endpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-ClusterEndpoint"
   ClusterSecurityGroupId:
     Value: !GetAtt EksCluster.ClusterSecurityGroupId
+    Export:
+      Name: !Sub "${AWS::StackName}-ClusterSecurityGroupId"
+  ClusterOidcProviderUrl:
+    Value: !Select 
+      - 1
+      - !Split 
+        - '://'
+        - !GetAtt EksCluster.OpenIdConnectIssuerUrl
+    Export:
+      Name: !Sub "${AWS::StackName}-ClusterOidcProviderUrl"
+  ClusterOidcProviderArn:
+    Value: !GetAtt ClusterOidcProvider.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ClusterOidcProviderArn"
