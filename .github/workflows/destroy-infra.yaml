@@ -1,0 +1,47 @@
+name: destroy infra
+
+on:
+  schedule:
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          environment: [development, production]
+    
+    environment: ${{ matrix.environment }}
+
+    env:
+        AWS_REGION: ap-southeast-2
+        STACKS_TO_DELETE: |
+            roommate-networking-${{ vars.ENV_SHORTHAND }}
+            roommate-eks-${{ vars.ENV_SHORTHAND }}
+    
+    steps:
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Delete stacks if they exist
+        run: |
+          for stack in $STACKS_TO_DELETE; do
+            echo "checking stack '$stack' exists"
+            
+            if aws cloudformation describe-stacks --stack-name "$stack" >/dev/null 2>&1; then
+              echo "deleting stack '$stack'..."
+              aws cloudformation delete-stack --stack-name "$stack"
+              aws cloudformation wait stack-delete-complete --stack-name "$stack"
+              echo "stack '$stack' deleted"
+            else
+              echo "stack '$stack' does not exist, skipping"
+            fi
+          done
