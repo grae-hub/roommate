@@ -42,6 +42,7 @@ Conditions:
 
 Resources:
   # iam roles
+  # test line
   EksClusterRole:
     Type: AWS::IAM::Role
     Properties:
