@@ -38,6 +38,7 @@ jobs:
       AWS_REGION: ap-southeast-2
       NETWORKING_STACK_NAME: roommate-networking-${{ vars.ENV_SHORTHAND }}
       EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
+      KARPENTER_STACK_NAME: roommate-karpenter-${{ vars.ENV_SHORTHAND }}
 
     steps:
       - name: deploy networking cfn
@@ -78,3 +79,14 @@ jobs:
             NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
             NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
             NodeMaxSize="${{ vars.NODE_MAX_SIZE }}"
+      
+      - name: deploy karpenter cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${KARPENTER_STACK_NAME}" \
+            --template-file infra/cfn/karpenter.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+            EksStackName="${EKS_STACK_NAME}"
