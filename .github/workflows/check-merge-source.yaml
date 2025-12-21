@@ -1,0 +1,18 @@
+name: check merge source
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check merge source
+        run: |
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          if [ "$SOURCE_BRANCH" != "develop" ]; then
+            echo "error: only branch 'develop' can merge into 'main'"
+            exit 1
+          fi
