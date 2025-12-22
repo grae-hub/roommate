@@ -94,30 +94,16 @@ jobs:
 
       - name: deploy karpenter controller
         run: |
-          echo "getting cluster name (${EKS_STACK_NAME}-ClusterName)..."
+          echo "getting cluster name..."
           CLUSTER_NAME=$(aws cloudformation describe-stacks \
           --stack-name ${EKS_STACK_NAME} \
-          --query "Stacks[0].Outputs[?OutputKey=='${EKS_STACK_NAME}-ClusterName'].OutputValue" \
+          --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue" \
           --output text)
           echo "cluster name: '$CLUSTER_NAME'"
 
-          echo "getting karpenter controller role arn (${KARPENTER_STACK_NAME}-KarpenterControllerRoleArn)..."
+          echo "getting karpenter controller role arn..."
           CONTROLLER_ROLE_ARN=$(aws cloudformation describe-stacks \
           --stack-name ${KARPENTER_STACK_NAME} \
-          --query "Stacks[0].Outputs[?OutputKey=='${KARPENTER_STACK_NAME}-KarpenterControllerRoleArn'].OutputValue" \
+          --query "Stacks[0].Outputs[?OutputKey=='KarpenterControllerRoleArn'].OutputValue" \
           --output text)
           echo "karpenter controller role arn: '$CONTROLLER_ROLE_ARN'"
-
-          echo "getting all outputs for ${EKS_STACK_NAME}..."
-          EKS_STACK_OUTPUTS=$(aws cloudformation describe-stacks \
-          --stack-name ${EKS_STACK_NAME} \
-          --query "Stacks[0].Outputs \
-          --output text)
-          echo "${EKS_STACK_NAME} outputs: $EKS_STACK_OUTPUTS"
-
-          echo "getting all outputs for ${KARPENTER_STACK_NAME}..."
-          KARPENTER_STACK_OUTPUTS=$(aws cloudformation describe-stacks \
-          --stack-name ${KARPENTER_STACK_NAME} \
-          --query "Stacks[0].Outputs \
-          --output text)
-          echo "${KARPENTER_STACK_NAME} outputs: $KARPENTER_STACK_OUTPUTS"
