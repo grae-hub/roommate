@@ -443,3 +443,9 @@ Resources:
       Targets:
         - Id: KarpenterInterruptionQueueTarget
           Arn: !GetAtt KarpenterInterruptionQueue.Arn
+
+Outputs:
+  KarpenterControllerRoleArn:
+    Value: !Ref KarpenterControllerRole
+    Export:
+      Name: !Sub "${AWS::StackName}-KarpenterControllerRoleArn"

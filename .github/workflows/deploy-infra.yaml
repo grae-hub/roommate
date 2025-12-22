@@ -8,7 +8,8 @@ on:
     paths:
       - "infra/cfn/networking.yaml"
       - "infra/cfn/eks.yaml"
-      - ".github/workflows/deploy-to-aws.yaml"
+      - "infra/cfn/karpenter.yaml"
+      - ".github/workflows/deploy-infra.yaml"
   workflow_dispatch:
 
 permissions:
@@ -90,3 +91,19 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
             EksStackName="${EKS_STACK_NAME}"
+
+      - name: deploy karpenter controller
+        run: |
+          echo "getting cluster name..."
+          CLUSTER_NAME=$(aws cloudformation describe-stacks \
+          --stack-name ${EKS_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='${EKS_STACK_NAME}-ClusterName'].OutputValue" \
+          --output text)
+          echo "cluster name: '$CLUSTER_NAME'"
+
+          echo "getting karpenter controller role name..."
+          CONTROLLER_ROLE_ARN=$(aws cloudformation describe-stacks \
+          --stack-name ${KARPENTER_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='${KARPENTER_STACK_NAME}-KarpenterControllerRoleArn'].OutputValue" \
+          --output text)
+          echo "karpenter controller role arn: '$CONTROLLER_ROLE_ARN'"
