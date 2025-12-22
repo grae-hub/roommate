@@ -111,11 +111,13 @@ jobs:
           echo "getting all outputs for ${EKS_STACK_NAME}..."
           EKS_STACK_OUTPUTS=$(aws cloudformation describe-stacks \
           --stack-name ${EKS_STACK_NAME} \
+          --query "Stacks[0].Outputs \
           --output text)
           echo "${EKS_STACK_NAME} outputs: $EKS_STACK_OUTPUTS"
 
           echo "getting all outputs for ${KARPENTER_STACK_NAME}..."
           KARPENTER_STACK_OUTPUTS=$(aws cloudformation describe-stacks \
           --stack-name ${KARPENTER_STACK_NAME} \
+          --query "Stacks[0].Outputs \
           --output text)
           echo "${KARPENTER_STACK_NAME} outputs: $KARPENTER_STACK_OUTPUTS"
