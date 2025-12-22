@@ -53,6 +53,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${App}-private-subnet-1-${Env}"
+        - Key: karpenter.sh/discovery
+          Value: !Sub "${App}-${Env}"
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -70,6 +72,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${App}-subnet-private-2-${Env}"
+        - Key: karpenter.sh/discovery
+          Value: !Sub "${App}-${Env}"
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet

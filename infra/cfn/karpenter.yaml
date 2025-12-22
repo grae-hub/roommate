@@ -2,6 +2,21 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: modified default karpenter template to support deployment of the controller role
 
 Parameters:
+  App:
+    Type: String
+    Default: roommate
+
+  Env:
+    Type: String
+    AllowedValues:
+      - prod
+      - dev
+    Default: dev
+
+  NetworkStackName:
+    Type: String
+    Description: name of network stack
+  
   EksStackName:
     Type: String
     Description: name of eks stack
@@ -443,9 +458,49 @@ Resources:
       Targets:
         - Id: KarpenterInterruptionQueueTarget
           Arn: !GetAtt KarpenterInterruptionQueue.Arn
+  
+  KarpenterNodeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: security group for karpenter nodes
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub:
+            "${NetworkStackName}-VpcId"
+      Tags:
+        - Key: karpenter.sh/discovery
+          Value: !Sub "${App}-${Env}"
+  
+  NodeToNodeIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref KarpenterNodeSecurityGroup
+      SourceSecurityGroupId: !Ref KarpenterNodeSecurityGroup
+      IpProtocol: "-1"
+
+  NodeEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref KarpenterNodeSecurityGroup
+      IpProtocol: "-1"
+      CidrIp: 0.0.0.0/0
+
+  ControlPlaneToNodeIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref KarpenterNodeSecurityGroup
+      SourceSecurityGroupId:
+        Fn::ImportValue:
+          Fn::Sub:
+            "${EksStackName}-ClusterSecurityGroupId"
+      IpProtocol: "-1"
 
 Outputs:
   KarpenterControllerRoleArn:
     Value: !Ref KarpenterControllerRole
     Export:
       Name: !Sub "${AWS::StackName}-KarpenterControllerRoleArn"
+  KarpenterNodeRoleArn:
+    Value: !Ref KarpenterNodeRole
+    Export:
+      Name: !Sub "${AWS::StackName}-KarpenterNodeRoleArn"

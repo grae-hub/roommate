@@ -1,0 +1,26 @@
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: {{ .Values.nodePool.name }}
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: {{ .Values.nodeClass.name }}
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: {{- toYaml .Values.nodePool.capacityTypes | nindent 12 }}
+        - key: kubernetes.io/arch
+          operator: In
+          values: {{- toYaml .Values.nodePool.architectures | nindent 12 }}
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: {{- toYaml .Values.nodePool.instanceCategories | nindent 12 }}
+  limits:
+    cpu: {{ .Values.nodePool.cpuLimit }}
+    memory: {{ .Values.nodePool.memLimit }}
+  disruption:
+    consolidationPolicy: {{ .Values.nodePool.consolidationPolicy }}

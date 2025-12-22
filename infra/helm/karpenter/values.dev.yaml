@@ -1,0 +1,20 @@
+appName: ""
+nodeRole: ""
+
+nodeClass:
+  name: default
+  amiAlias: al2023@latest
+
+nodePool:
+  name: default
+  capacityTypes:
+    - spot
+  architectures:
+    - amd64
+  instanceCategories:
+    - t3.micro
+    - t3.small
+    - t3.medium
+  cpuLimit: 8
+  memLimit: 16
+  consolidationPolicy: WhenEmptyOrUnderutilized
