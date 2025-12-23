@@ -497,10 +497,10 @@ Resources:
 
 Outputs:
   KarpenterControllerRoleArn:
-    Value: !Ref KarpenterControllerRole
+    Value: !GetAtt KarpenterControllerRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-KarpenterControllerRoleArn"
   KarpenterNodeRoleArn:
-    Value: !Ref KarpenterNodeRole
+    Value: !GetAtt KarpenterNodeRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-KarpenterNodeRoleArn"
