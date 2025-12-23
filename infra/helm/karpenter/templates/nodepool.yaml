@@ -24,3 +24,4 @@ spec:
     memory: {{ .Values.nodePool.memLimit }}
   disruption:
     consolidationPolicy: {{ .Values.nodePool.consolidationPolicy }}
+    consolidateAfter: {{ .Values.nodePool.consolidateAfter }}

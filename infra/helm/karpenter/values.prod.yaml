@@ -18,3 +18,4 @@ nodePool:
   cpuLimit: 16
   memLimit: 32
   consolidationPolicy: WhenEmptyOrUnderutilized
+  consolidateAfter: 1m
