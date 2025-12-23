@@ -53,6 +53,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${App}-private-subnet-1-${Env}"
+        - Key: karpenter.sh/discovery
+          Value: !Sub "${App}-${Env}"
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -70,6 +72,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${App}-subnet-private-2-${Env}"
+        - Key: karpenter.sh/discovery
+          Value: !Sub "${App}-${Env}"
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -142,7 +146,7 @@ Resources:
       ConnectivityType: public
       Tags:
         - Key: Name
-          Value: "${App}-nat-1-${Env}"
+          Value: !Sub "${App}-nat-1-${Env}"
   
   NatGateway2:
     Type: AWS::EC2::NatGateway
@@ -153,7 +157,7 @@ Resources:
       ConnectivityType: public
       Tags:
         - Key: Name
-          Value: "${App}-nat-2-${Env}"
+          Value: !Sub "${App}-nat-2-${Env}"
   
   # route tables
   PublicRouteTable:

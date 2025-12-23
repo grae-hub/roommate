@@ -8,7 +8,8 @@ on:
     paths:
       - "infra/cfn/networking.yaml"
       - "infra/cfn/eks.yaml"
-      - ".github/workflows/deploy-to-aws.yaml"
+      - "infra/cfn/karpenter.yaml"
+      - ".github/workflows/deploy-infra.yaml"
   workflow_dispatch:
 
 permissions:
@@ -36,6 +37,7 @@ jobs:
 
     env:
       AWS_REGION: ap-southeast-2
+      APP_NAME: roommate
       NETWORKING_STACK_NAME: roommate-networking-${{ vars.ENV_SHORTHAND }}
       EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
       KARPENTER_STACK_NAME: roommate-karpenter-${{ vars.ENV_SHORTHAND }}
@@ -89,4 +91,49 @@ jobs:
             --no-fail-on-empty-changeset \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            NetworkStackName="${NETWORKING_STACK_NAME}" \
             EksStackName="${EKS_STACK_NAME}"
+
+      - name: deploy karpenter controller
+        run: |
+          echo "getting cluster name..."
+          CLUSTER_NAME=$(aws cloudformation describe-stacks \
+          --stack-name ${EKS_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue" \
+          --output text)
+          echo "cluster name: '$CLUSTER_NAME'"
+
+          echo "getting karpenter controller role arn..."
+          CONTROLLER_ROLE_ARN=$(aws cloudformation describe-stacks \
+          --stack-name ${KARPENTER_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='KarpenterControllerRoleArn'].OutputValue" \
+          --output text)
+          echo "karpenter controller role arn: '$CONTROLLER_ROLE_ARN'"
+
+          echo "configuring kubectl connection to cluster..."
+          aws eks update-kubeconfig --name $CLUSTER_NAME --region ${AWS_REGION}
+
+          echo "executing helm chart..."
+          helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
+            --version "1.0.0" \
+            --namespace karpenter \
+            --create-namespace \
+            --set "settings.clusterName=$CLUSTER_NAME" \
+            --set "settings.interruptionQueue=$CLUSTER_NAME" \
+            --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=$CONTROLLER_ROLE_ARN
+      
+      - name: deploy karpenter nodepool
+        run: |
+          echo "getting node role arn..."
+          NODE_ROLE=$(aws cloudformation describe-stacks \
+          --stack-name ${KARPENTER_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='KarpenterNodeRoleArn'].OutputValue" \
+          --output text)
+          echo "node role arn: '$NODE_ROLE'"
+
+          helm upgrade --install karpenter-nodepool ./infra/helm/karpenter \
+            -f ./infra/helm/karpenter/values.${{ vars.ENV_SHORTHAND }}.yaml \
+            --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
+            --set nodeRole=$NODE_ROLE \
+            --namespace karpenter
