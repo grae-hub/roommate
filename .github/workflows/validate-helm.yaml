@@ -30,6 +30,10 @@ jobs:
     needs: set-env
     runs-on: ubuntu-latest
     environment: ${{ needs.set-env.outputs.env }}
+
+    env:
+      APP_NAME: roommate
+      NODE_ROLE: arn:aws:iam::123456889:role/dummy-role
     
     steps:
       - name: Checkout code
@@ -42,7 +46,10 @@ jobs:
         run: |
           for chart in infra/helm/*/; do
             echo "linting $chart..."
-            helm lint "$chart"
+            helm lint "$chart" \
+              -f "$chart/values.${{ vars.ENV_SHORTHAND }}.yaml" \
+              --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
+              --set nodeRole=$NODE_ROLE
           done
 
       - name: template all charts
@@ -50,12 +57,8 @@ jobs:
           for chart in infra/helm/*/; do
             chart_name=$(basename "$chart")
             echo "templating $chart..."
-            helm template "$chart_name" "$chart"
-          done
-
-      - name: lint all charts
-        run: |
-          for chart in infra/helm/*/; do
-            echo "linting $chart..."
-            helm lint "$chart" -f "$chart/values.${{ vars.ENV_SHORTHAND }}.yaml"
+            helm template "$chart_name" "$chart" \
+              -f "$chart/values.${{ vars.ENV_SHORTHAND }}.yaml" \
+              --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
+              --set nodeRole=$NODE_ROLE
           done
