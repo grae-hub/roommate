@@ -1,0 +1,4 @@
+apiVersion: v2
+name: karpenter
+description: karpenter config (nodeclass and nodepool)
+version: 1.0.0

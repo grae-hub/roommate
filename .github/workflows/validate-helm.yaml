@@ -1,0 +1,64 @@
+name: validate helm
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "infra/helm/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.set-env.outputs.env }}
+    steps:
+      - name: Determine environment
+        id: set-env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+          else
+            echo "env=development" >> $GITHUB_OUTPUT
+          fi
+  validate-helm:
+    needs: set-env
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-env.outputs.env }}
+
+    env:
+      APP_NAME: roommate
+      NODE_ROLE: arn:aws:iam::123456889:role/dummy-role
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: install helm
+        uses: azure/setup-helm@v4
+
+      - name: lint all charts
+        run: |
+          for chart in infra/helm/*/; do
+            echo "linting $chart..."
+            helm lint "$chart" \
+              -f "$chart/values.${{ vars.ENV_SHORTHAND }}.yaml" \
+              --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
+              --set nodeRole=$NODE_ROLE
+          done
+
+      - name: template all charts
+        run: |
+          for chart in infra/helm/*/; do
+            chart_name=$(basename "$chart")
+            echo "templating $chart..."
+            helm template "$chart_name" "$chart" \
+              -f "$chart/values.${{ vars.ENV_SHORTHAND }}.yaml" \
+              --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
+              --set nodeRole=$NODE_ROLE
+          done
