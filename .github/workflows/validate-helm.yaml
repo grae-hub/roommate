@@ -1,0 +1,39 @@
+name: validate helm
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "infra/helm/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-helm:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: install helm
+        uses: azure/setup-helm@v4
+
+      - name: lint all charts
+        run: |
+          for chart in infra/helm/*/; do
+            echo "linting $chart..."
+            helm lint "$chart"
+          done
+
+      - name: template all charts
+        run: |
+          for chart in infra/helm/*/; do
+            chart_name=$(basename "$chart")
+            echo "templating $chart..."
+            helm template "$chart_name" "$chart"
+          done

@@ -146,7 +146,7 @@ Resources:
       ConnectivityType: public
       Tags:
         - Key: Name
-          Value: "${App}-nat-1-${Env}"
+          Value: !Sub "${App}-nat-1-${Env}"
   
   NatGateway2:
     Type: AWS::EC2::NatGateway
@@ -157,7 +157,7 @@ Resources:
       ConnectivityType: public
       Tags:
         - Key: Name
-          Value: "${App}-nat-2-${Env}"
+          Value: !Sub "${App}-nat-2-${Env}"
   
   # route tables
   PublicRouteTable:
