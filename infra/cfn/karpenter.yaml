@@ -359,7 +359,7 @@ Resources:
                   "Condition": {
                     "StringEquals": {
                       "${ClusterOidcProviderUrl}:aud": "sts.amazonaws.com",
-                      "${ClusterOidcProviderUrl}:sub": "system:serviceaccount:kube-system:karpenter"
+                      "${ClusterOidcProviderUrl}:sub": "system:serviceaccount:karpenter:karpenter"
                     }
                   }
                 }
