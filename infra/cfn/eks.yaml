@@ -71,6 +71,7 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
         - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 
   # eks cluster
   EksCluster:
@@ -113,7 +114,7 @@ Resources:
         MinSize: !Ref NodeMinSize
         DesiredSize: !Ref NodeDesiredSize
         MaxSize: !Ref NodeMaxSize
-      AmiType: AL2_x86_64
+      AmiType: AL2023_x86_64_STANDARD
 
   # oidc provider
   ClusterOidcProvider:

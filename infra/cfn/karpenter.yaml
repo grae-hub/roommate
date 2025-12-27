@@ -359,7 +359,7 @@ Resources:
                   "Condition": {
                     "StringEquals": {
                       "${ClusterOidcProviderUrl}:aud": "sts.amazonaws.com",
-                      "${ClusterOidcProviderUrl}:sub": "system:serviceaccount:kube-system:karpenter"
+                      "${ClusterOidcProviderUrl}:sub": "system:serviceaccount:karpenter:karpenter"
                     }
                   }
                 }
@@ -497,10 +497,10 @@ Resources:
 
 Outputs:
   KarpenterControllerRoleArn:
-    Value: !Ref KarpenterControllerRole
+    Value: !GetAtt KarpenterControllerRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-KarpenterControllerRoleArn"
   KarpenterNodeRoleArn:
-    Value: !Ref KarpenterNodeRole
+    Value: !GetAtt KarpenterNodeRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-KarpenterNodeRoleArn"
