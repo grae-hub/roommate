@@ -1,0 +1,21 @@
+appName: ""
+nodeRole: ""
+
+nodeClass:
+  name: default
+  amiAlias: al2023@latest
+
+nodePool:
+  name: default
+  capacityTypes:
+    - spot
+    - on-demand
+  architectures:
+    - amd64
+  instanceCategories:
+    - t
+    - m
+  cpuLimit: 16
+  memLimit: 32
+  consolidationPolicy: WhenEmptyOrUnderutilized
+  consolidateAfter: 1m
