@@ -503,4 +503,8 @@ Outputs:
   KarpenterNodeRoleArn:
     Value: !GetAtt KarpenterNodeRole.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-KarpenterNodeRoleArn"
+      Name: !Sub "${AWS::StackName}-KarpenterControllerRoleArn"
+  KarpenterNodeRole:
+    Value: !Ref KarpenterNodeRole
+    Export:
+      Name: !Sub "${AWS::StackName}-KarpenterNodeRole"

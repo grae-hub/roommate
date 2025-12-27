@@ -126,10 +126,10 @@ jobs:
       
       - name: deploy karpenter nodepool
         run: |
-          echo "getting node role arn..."
+          echo "getting node role name..."
           NODE_ROLE=$(aws cloudformation describe-stacks \
           --stack-name ${KARPENTER_STACK_NAME} \
-          --query "Stacks[0].Outputs[?OutputKey=='KarpenterNodeRoleArn'].OutputValue" \
+          --query "Stacks[0].Outputs[?OutputKey=='KarpenterNodeRole'].OutputValue" \
           --output text)
           echo "node role arn: '$NODE_ROLE'"
 
