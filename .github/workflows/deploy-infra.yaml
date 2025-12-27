@@ -118,4 +118,20 @@ jobs:
             --create-namespace \
             --set "settings.clusterName=$CLUSTER_NAME" \
             --set "settings.interruptionQueue=$CLUSTER_NAME" \
-            --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=$CONTROLLER_ROLE_ARN
+            --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=$CONTROLLER_ROLE_ARN \
+            --set replicas=${{ vars.NODE_DESIRED_SIZE }}
+      
+      - name: deploy karpenter nodepool
+        run: |
+          echo "getting node role name..."
+          NODE_ROLE=$(aws cloudformation describe-stacks \
+          --stack-name ${KARPENTER_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='KarpenterNodeRole'].OutputValue" \
+          --output text)
+          echo "node role arn: '$NODE_ROLE'"
+
+          helm upgrade --install karpenter-nodepool ./infra/helm/karpenter \
+            -f ./infra/helm/karpenter/values.${{ vars.ENV_SHORTHAND }}.yaml \
+            --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
+            --set nodeRole=$NODE_ROLE \
+            --namespace karpenter
