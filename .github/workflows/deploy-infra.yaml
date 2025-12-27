@@ -55,6 +55,12 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: install eksctl
+        run: |
+          curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+          tar -xzf eksctl_Linux_amd64.tar.gz
+          sudo mv eksctl /usr/local/bin
+
       - name: deploy networking cfn
         run: |
           aws cloudformation deploy \
@@ -114,7 +120,7 @@ jobs:
           echo "configuring kubectl connection to cluster..."
           aws eks update-kubeconfig --name $CLUSTER_NAME --region ${AWS_REGION}
 
-          echo "executing helm chart..."
+          echo "executing karpenter controller helm..."
           helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
             --version "1.0.0" \
             --namespace karpenter \
@@ -126,15 +132,36 @@ jobs:
       
       - name: deploy karpenter nodepool
         run: |
-          echo "getting node role name..."
+          echo "getting cluster name..."
+          CLUSTER_NAME=$(aws cloudformation describe-stacks \
+          --stack-name ${EKS_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue" \
+          --output text)
+          echo "cluster name: '$CLUSTER_NAME'"
+
+          echo "getting node role arn..."
           NODE_ROLE=$(aws cloudformation describe-stacks \
           --stack-name ${KARPENTER_STACK_NAME} \
-          --query "Stacks[0].Outputs[?OutputKey=='KarpenterNodeRole'].OutputValue" \
+          --query "Stacks[0].Outputs[?OutputKey=='KarpenterNodeRoleArn'].OutputValue" \
           --output text)
           echo "node role arn: '$NODE_ROLE'"
 
+          echo "getting node role name..."
+          NODE_ROLE_NAME="${NODE_ROLE##*/}"
+          echo "node role name: '$NODE_ROLE_NAME'"
+
+          echo "creating node role identity mapping..."
+          eksctl create iamidentitymapping \
+            --cluster "$CLUSTER_NAME" \
+            --arn "$NODE_ROLE" \
+            --username "system:node:{{EC2PrivateDNSName}}" \
+            --group "system:bootstrappers" \
+            --group "system:nodes" \
+            --region "${{ env.AWS_REGION }}"
+
+          echo "executing karpenter nodepool helm..."
           helm upgrade --install karpenter-nodepool ./infra/helm/karpenter \
             -f ./infra/helm/karpenter/values.${{ vars.ENV_SHORTHAND }}.yaml \
             --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
-            --set nodeRole=$NODE_ROLE \
+            --set nodeRole=$NODE_ROLE_NAME \
             --namespace karpenter
