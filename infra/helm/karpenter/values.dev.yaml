@@ -16,6 +16,6 @@ nodePool:
     - t3.small
     - t3.medium
   cpuLimit: 8
-  memLimit: 16
+  memLimit: 16Gi
   consolidationPolicy: WhenEmptyOrUnderutilized
   consolidateAfter: 1m
