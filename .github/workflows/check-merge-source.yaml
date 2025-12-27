@@ -4,15 +4,32 @@ on:
   pull_request:
     branches:
       - main
+      - develop
 
 jobs:
-  check-source-branch:
+  check-main-source:
     runs-on: ubuntu-latest
+    if: github.base_ref == 'main'
     steps:
       - name: check merge source
         run: |
           SOURCE_BRANCH="${{ github.head_ref }}"
           if [ "$SOURCE_BRANCH" != "develop" ]; then
             echo "error: only branch 'develop' can merge into 'main'"
+            exit 1
+          fi
+
+  check-develop-source:
+    runs-on: ubuntu-latest
+    if: github.base_ref == 'develop'
+    steps:
+      - name: check merge source
+        run: |
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          SOURCE_BRANCH_LC="${SOURCE_BRANCH,,}"
+          
+          if [[ ! "$SOURCE_BRANCH_LC" =~ ^(hotfix|bugfix|feature)/ ]]; then
+            echo "error: branch must start with hotfix/, bugfix/, or feature/ (case-insensitive)"
+            echo "got: $SOURCE_BRANCH"
             exit 1
           fi
