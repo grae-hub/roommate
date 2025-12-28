@@ -495,6 +495,16 @@ Resources:
             "${EksStackName}-ClusterSecurityGroupId"
       IpProtocol: "-1"
 
+  NodeToControlPlaneIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Fn::ImportValue:
+          Fn::Sub:
+            "${EksStackName}-ClusterSecurityGroupId"
+      SourceSecurityGroupId: !Ref KarpenterNodeSecurityGroup
+      IpProtocol: "-1"
+
 Outputs:
   KarpenterControllerRoleArn:
     Value: !GetAtt KarpenterControllerRole.Arn
@@ -503,8 +513,4 @@ Outputs:
   KarpenterNodeRoleArn:
     Value: !GetAtt KarpenterNodeRole.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-KarpenterControllerRoleArn"
-  KarpenterNodeRole:
-    Value: !Ref KarpenterNodeRole
-    Export:
-      Name: !Sub "${AWS::StackName}-KarpenterNodeRole"
+      Name: !Sub "${AWS::StackName}-KarpenterNodeRoleArn"

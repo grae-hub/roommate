@@ -12,10 +12,8 @@ nodePool:
   architectures:
     - amd64
   instanceCategories:
-    - t3.micro
-    - t3.small
-    - t3.medium
+    - t
   cpuLimit: 8
-  memLimit: 16
+  memLimit: 16Gi
   consolidationPolicy: WhenEmptyOrUnderutilized
   consolidateAfter: 1m
