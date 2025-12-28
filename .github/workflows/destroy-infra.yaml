@@ -20,10 +20,12 @@ jobs:
 
     env:
         AWS_REGION: ap-southeast-2
+        EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
         STACKS_TO_DELETE: |
             roommate-karpenter-${{ vars.ENV_SHORTHAND }}
             roommate-eks-${{ vars.ENV_SHORTHAND }}
             roommate-networking-${{ vars.ENV_SHORTHAND }}
+        KARPENTER_ROLE_NAME: KarpenterNodeRole-roommate-eks-cluster-${{ vars.ENV_SHORTHAND }}
     
     steps:
       - name: configure aws credentials
@@ -31,8 +33,105 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
+      
+      - name: configure kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.32.0'
+      
+      - name: configure kubeconfig for eks
+        run: |
+          echo "getting cluster name..."
+          CLUSTER_NAME=$(aws cloudformation describe-stacks \
+          --stack-name ${EKS_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue" \
+          --output text)
+          echo "cluster name: '$CLUSTER_NAME'"
 
-      - name: Delete stacks if they exist
+          aws eks update-kubeconfig \
+            --name "$CLUSTER_NAME" \
+            --region "${{ env.AWS_REGION }}"
+
+      - name: scale deployments to zero
+        run: |
+          IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
+
+          # loop over namespaces
+          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}"); do
+            echo "Processing namespace: ${ns}"
+
+            # loop over deployments in namespace
+            deploys=$(kubectl get deploy -n "${ns}" --no-headers 2>/dev/null | awk '{print $1}')
+
+            if [ -z "${deploys}" ]; then
+              echo "no deployments in ${ns}"
+              continue
+            fi
+
+            for d in $deploys; do
+              echo "scaling deployment/${d} in ${ns} to 0"
+              kubectl scale deployment "${d}" -n "${ns}" --replicas=0
+            done
+          done
+
+      - name: wait for pods to scale
+        run: |
+          IGNORE_NS_REGEX='^[[:space:]]*(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)[[:space:]]'
+
+          timeout_seconds=600
+          end=$((SECONDS + timeout_seconds))
+
+          while [ $SECONDS -lt $end ]; do
+            remaining_pods=$(kubectl get pods -A \
+              --field-selector=status.phase!=Succeeded,status.phase!=Failed \
+              --no-headers 2>/dev/null | \
+              grep -Ev "$IGNORE_NS_REGEX" || true)
+
+            if [ -n "$remaining_pods" ]; then
+              echo "remaining pods:"
+              echo "$remaining_pods"
+            fi
+
+            if [ -z "$remaining_pods" ]; then
+              remaining=0
+            else
+              remaining=$(printf '%s\n' "$remaining_pods" | wc -l)
+            fi
+
+            if [ "${remaining}" -eq 0 ]; then
+              echo "all pods terminated"
+              exit 0
+            fi
+
+            echo "${remaining} non-system pods still running..."
+            sleep 10
+          done
+
+          echo "timed out"
+          exit 1
+
+      - name: disassociate role from instance profile
+        run: |
+          profiles=$(aws iam list-instance-profiles-for-role \
+            --role-name "$KARPENTER_ROLE_NAME" \
+            --query 'InstanceProfiles[].InstanceProfileName' \
+            --output text)
+          
+          if [ -z "$profiles" ]; then
+            echo "no instance profiles associated with role '$KARPENTER_ROLE_NAME'"
+            exit 0
+          fi
+
+          for profile in $profiles; do
+            echo "processing profile: $profile"
+
+            echo "disasociating role..."
+            aws iam remove-role-from-instance-profile \
+              --instance-profile-name "$profile" \
+              --role-name "$KARPENTER_ROLE_NAME"
+          done
+
+      - name: delete stacks if they exist
         run: |
           for stack in $STACKS_TO_DELETE; do
             echo "checking stack '$stack' exists"
