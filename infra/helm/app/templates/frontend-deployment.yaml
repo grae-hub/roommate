@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: {{ .Values.appName }}-deployment
+    labels:
+        app: {{ .Values.frontend.name }}
+spec:
+    strategy:
+        type: {{ .Values.frontend.deployment.strategy }}
+    selector:
+        matchLabels:
+            app: {{ .Values.frontend.name }}
+    replicas: {{ .Values.frontend.deployment.replicas }}
+    template:
+        metadata:
+            name: {{ .Values.appName }}-pod
+            labels:
+                app: {{ .Values.frontend.name }}
+        spec:
+            containers:
+                - name: {{ .Values.frontend.deployment.containerName }}
+                  image: {{ .Values.frontend.deployment.containerImage }}
+                  ports:
+{{- toYaml .Values.frontend.deployment.containerPorts | nindent 20 }}
+                  resources:
+                    requests:
+                        cpu: {{ .Values.frontend.deployment.cpuMin }}
+                        memory: {{ .Values.frontend.deployment.memMin }}
+                        ephemeral-storage: {{ .Values.frontend.deployment.storageMin }}
+                    limits:
+                        cpu: {{ .Values.frontend.deployment.cpuMax }}
+                        memory: {{ .Values.frontend.deployment.memMax }}
+                        ephemeral-storage: {{ .Values.frontend.deployment.storageMax }}
