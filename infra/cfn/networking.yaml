@@ -60,7 +60,6 @@ Resources:
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
-    Condition: IsProd
     Properties:
       VpcId: !Ref Vpc
       AvailabilityZone: !Select [1, !GetAZs ""]
@@ -101,7 +100,6 @@ Resources:
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
-    Condition: IsProd
     Properties:
       VpcId: !Ref Vpc
       AvailabilityZone: !Select [0, !GetAZs ""]
@@ -192,7 +190,6 @@ Resources:
 
   PublicSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: IsProd
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
@@ -237,10 +234,12 @@ Resources:
 
   PrivateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: IsProd
     Properties:
       SubnetId: !Ref PrivateSubnet2
-      RouteTableId: !Ref PrivateRouteTable2
+      RouteTableId: !If
+        - IsProd
+        - !Ref PrivateRouteTable2
+        - !Ref PrivateRouteTable1
 
 Outputs:
   VpcId:
@@ -253,7 +252,6 @@ Outputs:
       Name: !Sub "${AWS::StackName}-PrivateSubnet1Id"
   PrivateSubnet2Id:
     Value: !Ref PrivateSubnet2
-    Condition: IsProd
     Export:
       Name: !Sub "${AWS::StackName}-PrivateSubnet2Id"
   PublicSubnet1Id:
@@ -262,6 +260,5 @@ Outputs:
       Name: !Sub "${AWS::StackName}-PublicSubnet1Id"
   PublicSubnet2Id:
     Value: !Ref PublicSubnet2
-    Condition: IsProd
     Export:
       Name: !Sub "${AWS::StackName}-PublicSubnet2Id"

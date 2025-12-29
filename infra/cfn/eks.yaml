@@ -37,9 +37,6 @@ Parameters:
     Type: Number
     Default: 2
 
-Conditions:
-  IsProd: !Equals [!Ref Env, "prod"]
-
 Resources:
   # iam roles
   EksClusterRole:
@@ -81,16 +78,11 @@ Resources:
       Version: !Ref KubernetesVersion
       RoleArn: !GetAtt EksClusterRole.Arn
       ResourcesVpcConfig:
-        SubnetIds: !If
-          - IsProd
-          -
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PublicSubnet1Id"
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PublicSubnet2Id"
-          -
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PublicSubnet1Id"
+        SubnetIds:
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PublicSubnet1Id"
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PublicSubnet2Id"
         EndpointPublicAccess: true
         EndpointPrivateAccess: true
 
@@ -101,13 +93,9 @@ Resources:
       ClusterName: !Ref EksCluster
       NodegroupName: !Sub "${App}-eks-node-group-${Env}"
       NodeRole: !GetAtt NodeInstanceRole.Arn
-      Subnets: !If
-          - IsProd
-          -
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
-          -
-            - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
+      Subnets:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
       InstanceTypes:
         - !Ref NodeInstanceType
       ScalingConfig:

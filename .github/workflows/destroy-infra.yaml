@@ -42,16 +42,28 @@ jobs:
       - name: configure kubeconfig for eks
         id: configure-kubeconfig
         run: |
-          echo "getting cluster name..."
+          echo "checking eks stack exists..."
           if ! aws cloudformation describe-stacks \
             --stack-name "${EKS_STACK_NAME}" >/tmp/stack.json 2>/dev/null; then
             echo "stack '${EKS_STACK_NAME}' does not exist"
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-          CLUSTER_NAME=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="ClusterName") | .OutputValue' /tmp/stack.json)
+      
+          echo "getting cluster name..."
+          CLUSTER_NAME=$(jq -r '
+            .Stacks[0].Outputs // [] 
+            | map(select(.OutputKey=="ClusterName"))[0].OutputValue // empty
+          ' /tmp/stack.json)
+      
+          if [ -z "$CLUSTER_NAME" ]; then
+            echo "no ClusterName output found on stack '${EKS_STACK_NAME}', skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+      
           echo "cluster name: '$CLUSTER_NAME'"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
       
           aws eks update-kubeconfig \
             --name "$CLUSTER_NAME" \
@@ -163,7 +175,6 @@ jobs:
           done
 
       - name: delete stacks if they exist
-        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           for stack in $STACKS_TO_DELETE; do
             echo "checking stack '$stack' exists"
