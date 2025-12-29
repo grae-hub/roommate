@@ -52,7 +52,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub "${App}-private-subnet-1-${Env}"
+          Value: !Sub "${App}-subnet-private-1-${Env}"
         - Key: karpenter.sh/discovery
           Value: !Sub "${App}-${Env}"
         - Key: !Sub "kubernetes.io/cluster/${App}-eks-cluster-${Env}"
@@ -102,7 +102,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [0, !GetAZs ""]
+      AvailabilityZone: !Select [1, !GetAZs ""]
       CidrBlock: !Select
         - 3
         - !Cidr
