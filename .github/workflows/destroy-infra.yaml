@@ -43,28 +43,27 @@ jobs:
         id: configure-kubeconfig
         run: |
           echo "checking eks stack exists..."
-          if ! aws cloudformation describe-stacks \
-            --stack-name "${EKS_STACK_NAME}" >/tmp/stack.json 2>/dev/null; then
-            echo "stack '${EKS_STACK_NAME}' does not exist"
+          STACK_STATUS=$(aws cloudformation describe-stacks \
+            --stack-name "${EKS_STACK_NAME}" \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+
+          if [[ "$STACK_STATUS" == "DOES_NOT_EXIST" || "$STACK_STATUS" == "DELETE_COMPLETE" ]]; then
+            echo "stack '${EKS_STACK_NAME}' does not exist or is deleted"
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-      
-          echo "getting cluster name..."
-          CLUSTER_NAME=$(jq -r '
-            .Stacks[0].Outputs // [] 
-            | map(select(.OutputKey=="ClusterName"))[0].OutputValue // empty
-          ' /tmp/stack.json)
-      
-          if [ -z "$CLUSTER_NAME" ]; then
-            echo "no ClusterName output found on stack '${EKS_STACK_NAME}', skipping"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-      
-          echo "cluster name: '$CLUSTER_NAME'"
+          
           echo "skip=false" >> "$GITHUB_OUTPUT"
-      
+          
+          echo "getting cluster name..."
+          CLUSTER_NAME=$(aws cloudformation describe-stacks \
+            --stack-name "${EKS_STACK_NAME}" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ClusterName`].OutputValue' \
+            --output text)
+          
+          echo "cluster name: '$CLUSTER_NAME'"
+          
           aws eks update-kubeconfig \
             --name "$CLUSTER_NAME" \
             --region "${{ env.AWS_REGION }}"
