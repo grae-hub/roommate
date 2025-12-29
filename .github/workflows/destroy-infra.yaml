@@ -117,6 +117,29 @@ jobs:
           echo "timed out"
           exit 1
 
+      - name: delete all services
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
+      
+          # loop over namespaces
+          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}"); do
+            echo "Processing namespace: ${ns}"
+      
+            # list services excluding the default Kubernetes service
+            services=$(kubectl get svc -n "${ns}" --no-headers 2>/dev/null | awk '{print $1}' | grep -v '^kubernetes$')
+      
+            if [ -z "${services}" ]; then
+              echo "no services in ${ns}"
+              continue
+            fi
+      
+            for s in $services; do
+              echo "deleting service/${s} in ${ns}"
+              kubectl delete svc "${s}" -n "${ns}" --wait=true
+            done
+          done
+
       - name: disassociate role from instance profile
         if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |

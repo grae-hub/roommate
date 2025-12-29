@@ -79,7 +79,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref Vpc
-      AvailabilityZone: !Select [2, !GetAZs ""]
+      AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: !Select
         - 2
         - !Cidr
