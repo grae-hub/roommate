@@ -55,6 +55,8 @@ Resources:
           Value: !Sub "${App}-private-subnet-1-${Env}"
         - Key: karpenter.sh/discovery
           Value: !Sub "${App}-${Env}"
+        - Key: !Sub "kubernetes.io/cluster/${App}-eks-cluster-${Env}"
+          Value: shared
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -74,6 +76,8 @@ Resources:
           Value: !Sub "${App}-subnet-private-2-${Env}"
         - Key: karpenter.sh/discovery
           Value: !Sub "${App}-${Env}"
+        - Key: !Sub "kubernetes.io/cluster/${App}-eks-cluster-${Env}"
+          Value: shared
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -92,6 +96,8 @@ Resources:
           Value: !Sub "${App}-subnet-public-1-${Env}"
         - Key: kubernetes.io/role/elb
           Value: 1
+        - Key: !Sub "kubernetes.io/cluster/${App}-eks-cluster-${Env}"
+          Value: shared
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -111,6 +117,8 @@ Resources:
           Value: !Sub "${App}-subnet-public-2-${Env}"
         - Key: kubernetes.io/role/elb
           Value: 1
+        - Key: !Sub "kubernetes.io/cluster/${App}-eks-cluster-${Env}"
+          Value: shared
 
   # igw
   InternetGateway:
