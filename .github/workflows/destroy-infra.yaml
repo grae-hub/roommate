@@ -40,19 +40,25 @@ jobs:
           version: 'v1.32.0'
       
       - name: configure kubeconfig for eks
+        id: configure-kubeconfig
         run: |
           echo "getting cluster name..."
-          CLUSTER_NAME=$(aws cloudformation describe-stacks \
-          --stack-name ${EKS_STACK_NAME} \
-          --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue" \
-          --output text)
+          if ! aws cloudformation describe-stacks \
+            --stack-name "${EKS_STACK_NAME}" >/tmp/stack.json 2>/dev/null; then
+            echo "stack '${EKS_STACK_NAME}' does not exist"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          CLUSTER_NAME=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="ClusterName") | .OutputValue' /tmp/stack.json)
           echo "cluster name: '$CLUSTER_NAME'"
-
+      
           aws eks update-kubeconfig \
             --name "$CLUSTER_NAME" \
             --region "${{ env.AWS_REGION }}"
 
       - name: scale deployments to zero
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
 
@@ -75,6 +81,7 @@ jobs:
           done
 
       - name: wait for pods to scale
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           IGNORE_NS_REGEX='^[[:space:]]*(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)[[:space:]]'
 
@@ -111,6 +118,7 @@ jobs:
           exit 1
 
       - name: disassociate role from instance profile
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           profiles=$(aws iam list-instance-profiles-for-role \
             --role-name "$KARPENTER_ROLE_NAME" \
@@ -132,6 +140,7 @@ jobs:
           done
 
       - name: delete stacks if they exist
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           for stack in $STACKS_TO_DELETE; do
             echo "checking stack '$stack' exists"
