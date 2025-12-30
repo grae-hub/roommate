@@ -2,17 +2,24 @@ appName: "roommate"
 
 frontend:
   name: roommate-frontend
-  strategy: RollingDeployment
-  replicas: 2
-  containerName: nginx-app
-  containerImage: nginx:latest
-  containerPorts:
-    - name: http
-      containerPort: 80
-      protocol: TCP
-  cpuMin: 100m
-  cpuMax: 600m
-  memMin: 128Mi
-  memMax: 512Mi
-  storageMin: 100Mi
-  storageMax: 2Gi
+  deployment:
+    strategy: RollingUpdate
+    replicas: 2
+    containerName: nginx-app
+    containerImage: nginx:latest
+    containerPorts:
+      - name: http
+        containerPort: 80
+        protocol: TCP
+    cpuMin: 100m
+    cpuMax: 600m
+    memMin: 128Mi
+    memMax: 512Mi
+    storageMin: 100Mi
+    storageMax: 2Gi
+  service:
+    ports:
+      - name: http
+        port: 80
+        targetPort: 80
+        protocol: TCP
