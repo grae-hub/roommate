@@ -40,19 +40,36 @@ jobs:
           version: 'v1.32.0'
       
       - name: configure kubeconfig for eks
+        id: configure-kubeconfig
         run: |
+          echo "checking eks stack exists..."
+          STACK_STATUS=$(aws cloudformation describe-stacks \
+            --stack-name "${EKS_STACK_NAME}" \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+
+          if [[ "$STACK_STATUS" == "DOES_NOT_EXIST" || "$STACK_STATUS" == "DELETE_COMPLETE" ]]; then
+            echo "stack '${EKS_STACK_NAME}' does not exist or is deleted"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          
           echo "getting cluster name..."
           CLUSTER_NAME=$(aws cloudformation describe-stacks \
-          --stack-name ${EKS_STACK_NAME} \
-          --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue" \
-          --output text)
+            --stack-name "${EKS_STACK_NAME}" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ClusterName`].OutputValue' \
+            --output text)
+          
           echo "cluster name: '$CLUSTER_NAME'"
-
+          
           aws eks update-kubeconfig \
             --name "$CLUSTER_NAME" \
             --region "${{ env.AWS_REGION }}"
 
       - name: scale deployments to zero
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
 
@@ -75,6 +92,7 @@ jobs:
           done
 
       - name: wait for pods to scale
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           IGNORE_NS_REGEX='^[[:space:]]*(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)[[:space:]]'
 
@@ -110,7 +128,31 @@ jobs:
           echo "timed out"
           exit 1
 
+      - name: delete all services
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
+      
+          # loop over namespaces
+          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}"); do
+            echo "Processing namespace: ${ns}"
+      
+            # list services excluding the default Kubernetes service
+            services=$(kubectl get svc -n "${ns}" --no-headers 2>/dev/null | awk '{print $1}' | grep -v '^kubernetes$')
+      
+            if [ -z "${services}" ]; then
+              echo "no services in ${ns}"
+              continue
+            fi
+      
+            for s in $services; do
+              echo "deleting service/${s} in ${ns}"
+              kubectl delete svc "${s}" -n "${ns}" --wait=true
+            done
+          done
+
       - name: disassociate role from instance profile
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           profiles=$(aws iam list-instance-profiles-for-role \
             --role-name "$KARPENTER_ROLE_NAME" \

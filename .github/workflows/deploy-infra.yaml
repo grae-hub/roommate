@@ -165,3 +165,9 @@ jobs:
             --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
             --set nodeRole=$NODE_ROLE_NAME \
             --namespace karpenter
+
+      - name: deploy app infra
+        run: |
+          echo "executing app helm..."
+          helm upgrade --install app ./infra/helm/app \
+            -f ./infra/helm/app/values.${{ vars.ENV_SHORTHAND }}.yaml
