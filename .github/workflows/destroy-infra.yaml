@@ -127,7 +127,15 @@ jobs:
 
           echo "timed out"
           exit 1
-          
+
+      - name: uninstall all helms
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          helm uninstall karpenter
+          helm uninstall karpenter-nodepool
+          helm uninstall aws-load-balancer-controller
+          helm uninstall app
+
       - name: delete all ingresses
         if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
