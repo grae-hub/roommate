@@ -127,6 +127,28 @@ jobs:
 
           echo "timed out"
           exit 1
+          
+      - name: delete all ingresses
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
+      
+          # loop over namespaces
+          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}" || true); do
+            echo "Processing namespace: ${ns}"
+      
+            ingresses=$(kubectl get ingress -n "${ns}" --no-headers 2>/dev/null | awk '{print $1}' || true)
+      
+            if [ -z "${ingresses}" ]; then
+              echo "no ingresses in ${ns}"
+              continue
+            fi
+      
+            for i in $ingresses; do
+              echo "deleting ingress/${i} in ${ns}"
+              kubectl delete ingress "${i}" -n "${ns}" --wait=true
+            done
+          done
 
       - name: delete all services
         if: steps.configure-kubeconfig.outputs.skip != 'true'
