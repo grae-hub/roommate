@@ -173,7 +173,10 @@ jobs:
             read -r RELEASE NS <<< "$entry"
             if helm status "$RELEASE" -n "$NS" >/dev/null 2>&1; then
               echo "uninstalling helm '$RELEASE'..."
-              helm uninstall "$RELEASE" -n "$NS" --wait --timeout 5m0s
+              if ! helm uninstall "$RELEASE" -n "$NS" --wait --timeout 5m0s; then
+                echo "failed to uninstall helm '$RELEASE' in '$NS'"
+                continue
+              fi
             else
               echo "helm '$RELEASE' does not exist"
             fi
@@ -208,7 +211,8 @@ jobs:
           IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
       
           # loop over namespaces
-          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}" || true); do
+          NAMESPACES=$(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "$IGNORE_NS_REGEX" || true)
+          for ns in $NAMESPACES; do
             echo "Processing namespace: ${ns}"
       
             # list services excluding the default Kubernetes service
@@ -231,7 +235,8 @@ jobs:
           IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
       
           # loop over namespaces
-          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}" || true); do
+          NAMESPACES=$(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "$IGNORE_NS_REGEX" || true)
+          for ns in $NAMESPACES; do
             echo "Processing namespace: ${ns}"
       
             # list deployments
