@@ -203,7 +203,7 @@ jobs:
             for i in $ingresses; do
               echo "TOP OF INGRESS LOOP"########
               echo "deleting ingress/${i} in ${ns}"
-              kubectl delete ingress "${i}" -n "${ns}" --wait=true
+              kubectl delete ingress "${i}" -n "${ns}" --wait=true --ignore-not-found=true
               echo "INGRESS DELETED"########
             done
             echo "BOTTOM OF NS LOOP"########
