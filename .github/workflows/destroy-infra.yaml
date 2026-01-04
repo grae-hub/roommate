@@ -201,14 +201,13 @@ jobs:
             fi
       
             for i in $ingresses; do
-              echo "TOP OF INGRESS LOOP"########
               echo "deleting ingress/${i} in ${ns}"
-              kubectl delete ingress "${i}" -n "${ns}" --wait=true --ignore-not-found=true
-              echo "INGRESS DELETED"########
+              if ! kubectl delete ingress "${i}" -n "${ns}" --wait=true --timeout=120s --ignore-not-found=true; then
+                echo "failed to delete ingress ${i} in ${ns} (timeout or error)"
+                continue
+              fi
             done
-            echo "BOTTOM OF NS LOOP"########
           done
-          echo "ESCAPED"########
 
       - name: delete all services
         if: steps.configure-kubeconfig.outputs.skip != 'true'
@@ -228,9 +227,12 @@ jobs:
               continue
             fi
       
-            for s in $services; do
-              echo "deleting service/${s} in ${ns}"
-              kubectl delete svc "${s}" -n "${ns}" --wait=true
+            for i in $services; do
+              echo "deleting service/${i} in ${ns}"
+              if ! kubectl delete service "${i}" -n "${ns}" --wait=true --timeout=120s --ignore-not-found=true; then
+                echo "failed to delete service ${i} in ${ns} (timeout or error)"
+                continue
+              fi
             done
           done
       
@@ -252,9 +254,12 @@ jobs:
               continue
             fi
       
-            for d in $deployments; do
-              echo "deleting deployment/${d} in ${ns}"
-              kubectl delete deployment "${d}" -n "${ns}" --wait=true
+            for i in $deployment; do
+              echo "deleting deployment/${i} in ${ns}"
+              if ! kubectl delete deployment "${i}" -n "${ns}" --wait=true --timeout=120s --ignore-not-found=true; then
+                echo "failed to delete deployment ${i} in ${ns} (timeout or error)"
+                continue
+              fi
             done
           done
 
