@@ -10,7 +10,6 @@ frontend:
     containerPorts:
       - name: http
         containerPort: 80
-        protocol: TCP
     cpuMin: 100m
     cpuMax: 600m
     memMin: 128Mi
@@ -22,4 +21,12 @@ frontend:
       - name: http
         port: 80
         targetPort: 80
-        protocol: TCP
+  ingress:
+    paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: roommate-service
+            port:
+              number: 80
