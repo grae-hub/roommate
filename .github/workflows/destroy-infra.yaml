@@ -185,12 +185,13 @@ jobs:
           IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
       
           # loop over namespaces
-          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}" || true); do
-            echo "Processing namespace: ${ns}"
+          NAMESPACES = $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "$IGNORE_NS_REGEX" || true)
+          for ns in $NAMESPACES; do
+            echo "Processing namespace: $ns"
       
-            ingresses=$(kubectl get ingress -n "${ns}" --no-headers 2>/dev/null | awk '{print $1}' || true)
+            ingresses=$(kubectl get ingress -n "$ns" --no-headers 2>/dev/null | awk '{print $1}' || true)
       
-            if [ -z "${ingresses}" ]; then
+            if [ -z "$ingresses" ]; then
               echo "no ingresses in ${ns}"
               continue
             fi
@@ -223,28 +224,51 @@ jobs:
               kubectl delete svc "${s}" -n "${ns}" --wait=true
             done
           done
-
-      - name: disassociate role from instance profile
+      
+      - name: delete all deployments
         if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
-          profiles=$(aws iam list-instance-profiles-for-role \
-            --role-name "$KARPENTER_ROLE_NAME" \
-            --query 'InstanceProfiles[].InstanceProfileName' \
-            --output text)
-          
-          if [ -z "$profiles" ]; then
-            echo "no instance profiles associated with role '$KARPENTER_ROLE_NAME'"
-            exit 0
-          fi
-
-          for profile in $profiles; do
-            echo "processing profile: $profile"
-
-            echo "disasociating role..."
-            aws iam remove-role-from-instance-profile \
-              --instance-profile-name "$profile" \
-              --role-name "$KARPENTER_ROLE_NAME"
+          IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
+      
+          # loop over namespaces
+          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}" || true); do
+            echo "Processing namespace: ${ns}"
+      
+            # list deployments
+            deployments=$(kubectl get deployments -n "${ns}" --no-headers 2>/dev/null | awk '{print $1}' || true)
+      
+            if [ -z "${deployments}" ]; then
+              echo "no deployments in ${ns}"
+              continue
+            fi
+      
+            for d in $deployments; do
+              echo "deleting deployment/${d} in ${ns}"
+              kubectl delete deployment "${d}" -n "${ns}" --wait=true
+            done
           done
+
+      # - name: disassociate role from instance profile
+      #   if: steps.configure-kubeconfig.outputs.skip != 'true'
+      #   run: |
+      #     profiles=$(aws iam list-instance-profiles-for-role \
+      #       --role-name "$KARPENTER_ROLE_NAME" \
+      #       --query 'InstanceProfiles[].InstanceProfileName' \
+      #       --output text)
+          
+      #     if [ -z "$profiles" ]; then
+      #       echo "no instance profiles associated with role '$KARPENTER_ROLE_NAME'"
+      #       exit 0
+      #     fi
+
+      #     for profile in $profiles; do
+      #       echo "processing profile: $profile"
+
+      #       echo "disasociating role..."
+      #       aws iam remove-role-from-instance-profile \
+      #         --instance-profile-name "$profile" \
+      #         --role-name "$KARPENTER_ROLE_NAME"
+      #     done
 
       - name: delete stacks if they exist
         run: |
