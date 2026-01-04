@@ -190,7 +190,6 @@ jobs:
           # loop over namespaces
           NAMESPACES=$(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "$IGNORE_NS_REGEX" || true)
           for ns in $NAMESPACES; do
-            echo "TOP OF NS LOOP"########
             echo "processing namespace $ns"
       
             ingresses=$(kubectl get ingress -n "$ns" --no-headers 2>/dev/null | awk '{print $1}' || true)
