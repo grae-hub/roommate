@@ -190,7 +190,8 @@ jobs:
           # loop over namespaces
           NAMESPACES=$(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "$IGNORE_NS_REGEX" || true)
           for ns in $NAMESPACES; do
-            echo "Processing namespace: $ns"
+            echo "TOP OF NS LOOP"########
+            echo "processing namespace $ns"
       
             ingresses=$(kubectl get ingress -n "$ns" --no-headers 2>/dev/null | awk '{print $1}' || true)
       
@@ -200,10 +201,14 @@ jobs:
             fi
       
             for i in $ingresses; do
+              echo "TOP OF INGRESS LOOP"########
               echo "deleting ingress/${i} in ${ns}"
               kubectl delete ingress "${i}" -n "${ns}" --wait=true
+              echo "INGRESS DELETED"########
             done
+            echo "BOTTOM OF NS LOOP"########
           done
+          echo "ESCAPED"########
 
       - name: delete all services
         if: steps.configure-kubeconfig.outputs.skip != 'true'
