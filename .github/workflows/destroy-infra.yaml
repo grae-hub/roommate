@@ -129,6 +129,13 @@ jobs:
           echo "timed out"
           exit 1
 
+      - name: install eksctl
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+          tar -xzf eksctl_Linux_amd64.tar.gz
+          sudo mv eksctl /usr/local/bin
+
       - name: uninstall load balancer service account
         if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
