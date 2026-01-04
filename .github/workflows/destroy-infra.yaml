@@ -262,28 +262,6 @@ jobs:
             done
           done
 
-      # - name: disassociate role from instance profile
-      #   if: steps.configure-kubeconfig.outputs.skip != 'true'
-      #   run: |
-      #     profiles=$(aws iam list-instance-profiles-for-role \
-      #       --role-name "$KARPENTER_ROLE_NAME" \
-      #       --query 'InstanceProfiles[].InstanceProfileName' \
-      #       --output text)
-          
-      #     if [ -z "$profiles" ]; then
-      #       echo "no instance profiles associated with role '$KARPENTER_ROLE_NAME'"
-      #       exit 0
-      #     fi
-
-      #     for profile in $profiles; do
-      #       echo "processing profile: $profile"
-
-      #       echo "disasociating role..."
-      #       aws iam remove-role-from-instance-profile \
-      #         --instance-profile-name "$profile" \
-      #         --role-name "$KARPENTER_ROLE_NAME"
-      #     done
-
       - name: delete stacks if they exist
         run: |
           for stack in $STACKS_TO_DELETE; do
