@@ -162,22 +162,22 @@ jobs:
       - name: uninstall all helms
         if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
-          if helm status app >/dev/null 2>&1; then
-            echo "uninstalling helm 'app'"
-            helm uninstall app --wait --timeout 10m0s
-          fi
-          if helm status karpenter-nodepool -n karpenter >/dev/null 2>&1; then
-            echo "uninstalling helm 'karpenter-nodepool'"
-            helm uninstall karpenter-nodepool -n karpenter --wait --timeout 10m0s
-          fi
-          if helm status karpenter -n karpenter >/dev/null 2>&1; then
-            echo "uninstalling helm 'karpenter'"
-            helm uninstall karpenter -n karpenter --wait --timeout 10m0s
-          fi
-          if helm status aws-load-balancer-controller -n kube-system >/dev/null 2>&1; then
-            echo "uninstalling helm 'aws-load-balancer-controller'"
-            helm uninstall aws-load-balancer-controller -n kube-system --wait --timeout 10m0s
-          fi
+          HELM_RELEASES=(
+            "app default"
+            "karpenter-nodepool karpenter"
+            "karpenter karpenter"
+            "aws-load-balancer-controller kube-system"
+          )
+      
+          for entry in "${HELM_RELEASES[@]}"; do
+            read -r RELEASE NS <<< "$entry"
+            if helm status "$RELEASE" -n "$NS" >/dev/null 2>&1; then
+              echo "uninstalling helm '$RELEASE'..."
+              helm uninstall "$RELEASE" -n "$NS" --wait --timeout 5m0s
+            else
+              echo "helm '$RELEASE' does not exist"
+            fi
+          done
 
       - name: delete all ingresses
         if: steps.configure-kubeconfig.outputs.skip != 'true'
