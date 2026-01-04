@@ -131,9 +131,18 @@ jobs:
       - name: uninstall all helms
         if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
-          helm uninstall karpenter-nodepool -n karpenter --wait --timeout 10m0s
-          helm uninstall karpenter -n karpenter --wait --timeout 10m0s
-          helm uninstall aws-load-balancer-controller -n kube-system --wait --timeout 10m0s
+          if helm status app >/dev/null 2>&1; then
+            helm uninstall app --wait --timeout 10m0s
+          fi
+          if helm status karpenter-nodepool -n karpenter >/dev/null 2>&1; then
+            helm uninstall karpenter-nodepool -n karpenter --wait --timeout 10m0s
+          fi
+          if helm status karpenter -n karpenter >/dev/null 2>&1; then
+            helm uninstall karpenter -n karpenter --wait --timeout 10m0s
+          fi
+          if helm status aws-load-balancer-controller -n kube-system >/dev/null 2>&1; then
+            helm uninstall aws-load-balancer-controller -n kube-system --wait --timeout 10m0s
+          fi
 
       - name: delete all ingresses
         if: steps.configure-kubeconfig.outputs.skip != 'true'
