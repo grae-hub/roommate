@@ -259,14 +259,14 @@ jobs:
           fi
 
       - name: get ingress alb hosted zone
-        id: get-alb
         run: |
           ALB_HOSTED_ZONE_ID=$(aws elbv2 describe-load-balancers \
             --region ap-southeast-2 \
             --query "LoadBalancers[?DNSName=='${{ env.AWS_REGION }}'].CanonicalHostedZoneId" \
             --output text)
 
-            echo "ALB_HOSTED_ZONE_ID=${ALB_HOSTED_ZONE_ID}" >> $GITHUB_ENV
+          echo "got hosted zone id"
+          echo "ALB_HOSTED_ZONE_ID=${ALB_HOSTED_ZONE_ID}" >> $GITHUB_ENV
 
       - name: create ingress alb record
         run: |
