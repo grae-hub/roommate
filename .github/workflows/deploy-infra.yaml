@@ -237,7 +237,7 @@ jobs:
       - name: get ingress alb hostname
         id: get-alb
         run: |
-          INGRESS_NAME=${APP_NAME}-ingress
+          INGRESS_NAME=${{ env.APP_NAME }}-ingress
 
           # Wait for ALB to be provisioned (up to 5 minutes)
           for i in {1..30}; do
@@ -271,7 +271,7 @@ jobs:
                   "Type": "A",
                   "AliasTarget": {
                     "HostedZoneId": "${{ secrets.HOSTED_ZONE_ID }}",
-                    "DNSName": "$ALB_HOSTNAME",
+                    "DNSName": "${ALB_HOSTNAME}",
                     "EvaluateTargetHealth": true
                   }
                 }
