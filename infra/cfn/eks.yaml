@@ -36,6 +36,14 @@ Parameters:
   NodeMaxSize:
     Type: Number
     Default: 2
+  
+  DomainName:
+    Type: String
+    Default: roommatesync.click
+  
+  HostedZoneId:
+    Type: String
+    Default: Z09980193F7B1SUQ16X0C
 
 Resources:
   # iam roles
@@ -114,6 +122,16 @@ Resources:
       ThumbprintList:
         - 9e99a48a9960b14926bb7f3b02e22da2b0ab7280
 
+  # certificate for ingress
+  IngressCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+
 Outputs:
   ClusterName:
     Value: !Ref EksCluster
@@ -143,3 +161,5 @@ Outputs:
     Value: !GetAtt ClusterOidcProvider.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ClusterOidcProviderArn"
+  CertificateArn:
+    Value: !Ref IngressCertificate
