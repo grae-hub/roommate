@@ -285,6 +285,6 @@ jobs:
 
           aws route53 change-resource-record-sets \
             --hosted-zone-id ${{ secrets.HOSTED_ZONE_ID }} \
-            --change_batch file://change_batch.json
+            --change-batch file://change_batch.json
 
           echo "dns record created ${{ vars.DOMAIN_NAME }} -> ${ALB_HOSTNAME}"
