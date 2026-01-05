@@ -261,8 +261,8 @@ jobs:
       - name: get ingress alb hosted zone
         run: |
           ALB_HOSTED_ZONE_ID=$(aws elbv2 describe-load-balancers \
-            --region ap-southeast-2 \
-            --query "LoadBalancers[?DNSName=='${{ env.AWS_REGION }}'].CanonicalHostedZoneId" \
+            --region ${{ env.AWS_REGION }} \
+            --query "LoadBalancers[?DNSName=='${ALB_HOSTNAME}'].CanonicalHostedZoneId" \
             --output text)
 
           echo "got hosted zone id"
