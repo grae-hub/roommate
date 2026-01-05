@@ -87,7 +87,9 @@ jobs:
             NodeInstanceType="${{ vars.NODE_INSTANCE_TYPE }}" \
             NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
             NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
-            NodeMaxSize="${{ vars.NODE_MAX_SIZE }}"
+            NodeMaxSize="${{ vars.NODE_MAX_SIZE }}" \
+            DomainName="${{ vars.DOMAIN_NAME }}" \
+            HostedZoneId="${{ secrets.HOSTED_ZONE_ID }}"
       
       - name: deploy karpenter cfn
         run: |
@@ -140,6 +142,14 @@ jobs:
           --output text)
           echo "vpc id: '$VPC_ID'"
           echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
+
+          echo "getting ingress certificate arn..."
+          CERTIFICATE_ARN=$(aws cloudformation describe-stacks \
+          --stack-name ${EKS_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='CertificateArn'].OutputValue" \
+          --output text)
+          echo "ingress certificate arn: '$CERTIFICATE_ARN'"
+          echo "CERTIFICATE_ARN=$CERTIFICATE_ARN" >> $GITHUB_ENV
 
       - name: deploy karpenter controller
         run: |
@@ -221,4 +231,69 @@ jobs:
         run: |
           echo "executing app helm..."
           helm upgrade --install app ./infra/helm/app \
-            -f ./infra/helm/app/values.${{ vars.ENV_SHORTHAND }}.yaml
+            -f ./infra/helm/app/values.${{ vars.ENV_SHORTHAND }}.yaml \
+            --set frontend.ingress.certificateArn=$CERTIFICATE_ARN
+
+      - name: get ingress alb hostname
+        run: |
+          INGRESS_NAME=${{ env.APP_NAME }}-ingress
+
+          # wait for alb to be provisioned (up to 5 minutes)
+          for i in {1..30}; do
+            ALB_HOSTNAME=$(kubectl get ingress $INGRESS_NAME \
+              -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            
+            if [ -n "${ALB_HOSTNAME}" ]; then
+              echo "alb hostname: ${ALB_HOSTNAME}"
+              echo "ALB_HOSTNAME=${ALB_HOSTNAME}" >> $GITHUB_ENV
+              break
+            fi
+            
+            echo "waiting for alb to be provisioned... ($i/30)"
+            sleep 10
+          done
+
+          if [ -z "${ALB_HOSTNAME}" ]; then
+            echo "alb not found"
+            exit 1
+          fi
+
+      - name: get ingress alb hosted zone
+        run: |
+          ALB_HOSTED_ZONE_ID=$(aws elbv2 describe-load-balancers \
+            --region ${{ env.AWS_REGION }} \
+            --query "LoadBalancers[?DNSName=='${ALB_HOSTNAME}'].CanonicalHostedZoneId" \
+            --output text)
+
+          echo "got hosted zone id"
+          echo "ALB_HOSTED_ZONE_ID=${ALB_HOSTED_ZONE_ID}" >> $GITHUB_ENV
+
+      - name: create ingress alb record
+        run: |
+          cat > change_batch.json << EOF
+          {
+            "Changes": [
+              {
+                "Action": "UPSERT",
+                "ResourceRecordSet": {
+                  "Name": "${{ vars.DOMAIN_NAME }}",
+                  "Type": "A",
+                  "AliasTarget": {
+                    "HostedZoneId": "${ALB_HOSTED_ZONE_ID}",
+                    "DNSName": "${ALB_HOSTNAME}",
+                    "EvaluateTargetHealth": true
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+          echo "creating dns record..."
+          cat change_batch.json
+
+          aws route53 change-resource-record-sets \
+            --hosted-zone-id ${{ secrets.HOSTED_ZONE_ID }} \
+            --change-batch file://change_batch.json
+
+          echo "dns record created ${{ vars.DOMAIN_NAME }} -> ${ALB_HOSTNAME}"
