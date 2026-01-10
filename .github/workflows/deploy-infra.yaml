@@ -41,6 +41,7 @@ jobs:
       NETWORKING_STACK_NAME: roommate-networking-${{ vars.ENV_SHORTHAND }}
       EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
       KARPENTER_STACK_NAME: roommate-karpenter-${{ vars.ENV_SHORTHAND }}
+      COGNITO_STACK_NAME: roommate-cognito-${{ vars.ENV_SHORTHAND }}
       LB_CONTROLLER_VERSION: "2.9.0"
 
     steps:
@@ -103,6 +104,19 @@ jobs:
             Env="${{ vars.ENV_SHORTHAND }}" \
             NetworkStackName="${NETWORKING_STACK_NAME}" \
             EksStackName="${EKS_STACK_NAME}"
+
+      - name: deploy cognito cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${COGNITO_STACK_NAME}" \
+            --template-file infra/cfn/cognito.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            DomainName="${{ vars.DOMAIN_NAME }}" \
+            GoogleClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            GoogleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
       
       - name: get helm inputs
         run: |
@@ -150,6 +164,30 @@ jobs:
           --output text)
           echo "ingress certificate arn: '$CERTIFICATE_ARN'"
           echo "CERTIFICATE_ARN=$CERTIFICATE_ARN" >> $GITHUB_ENV
+
+          echo "getting cognito user pool arn..."
+          USER_POOL_ARN=$(aws cloudformation describe-stacks \
+          --stack-name ${COGNITO_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='UserPoolArn'].OutputValue" \
+          --output text)
+          echo "user pool arn: '$USER_POOL_ARN'"
+          echo "USER_POOL_ARN=$USER_POOL_ARN" >> $GITHUB_ENV
+
+          echo "getting cognito user pool client id..."
+          USER_POOL_CLIENT_ID=$(aws cloudformation describe-stacks \
+          --stack-name ${COGNITO_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" \
+          --output text)
+          echo "user pool client id: '$USER_POOL_CLIENT_ID'"
+          echo "USER_POOL_CLIENT_ID=$USER_POOL_CLIENT_ID" >> $GITHUB_ENV
+
+          echo "getting cognito user pool domain prefix..."
+          USER_POOL_DOMAIN_PREFIX=$(aws cloudformation describe-stacks \
+          --stack-name ${COGNITO_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='UserPoolDomainPrefix'].OutputValue" \
+          --output text)
+          echo "user pool domain prefix: '$USER_POOL_DOMAIN_PREFIX'"
+          echo "USER_POOL_DOMAIN_PREFIX=$USER_POOL_DOMAIN_PREFIX" >> $GITHUB_ENV
 
       - name: deploy karpenter controller
         run: |
@@ -232,7 +270,10 @@ jobs:
           echo "executing app helm..."
           helm upgrade --install app ./infra/helm/app \
             -f ./infra/helm/app/values.${{ vars.ENV_SHORTHAND }}.yaml \
-            --set frontend.ingress.certificateArn=$CERTIFICATE_ARN
+            --set frontend.ingress.certificateArn=$CERTIFICATE_ARN \
+            --set frontend.ingress.cognito.userPoolArn=$USER_POOL_ARN \
+            --set frontend.ingress.cognito.userPoolClientId=$USER_POOL_CLIENT_ID \
+            --set frontend.ingress.cognito.userPoolDomainPrefix=$USER_POOL_DOMAIN_PREFIX \
 
       - name: get ingress alb hostname
         run: |
