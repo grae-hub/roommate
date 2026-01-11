@@ -62,6 +62,10 @@ jobs:
             --name "${{ env.CLUSTER_NAME }}" \
             --region "${{ env.AWS_REGION }}"
 
+      - name: test kubeconfig
+        run: |
+          kubectl get ingresses
+
       - name: install eksctl
         if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
