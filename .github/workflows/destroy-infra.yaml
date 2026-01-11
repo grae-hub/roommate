@@ -74,29 +74,6 @@ jobs:
           tar -xzf eksctl_Linux_amd64.tar.gz
           sudo mv eksctl /usr/local/bin
 
-      - name: uninstall load balancer service account
-        if: steps.configure-kubeconfig.outputs.skip != 'true'
-        run: |
-          SERVICE_ACCOUNT=aws-load-balancer-controller
-          NS=kube-system
-          
-          if eksctl get iamserviceaccount \
-            --cluster "${{ env.CLUSTER_NAME }}" \
-            --region "${{ env.AWS_REGION }}" \
-            -o json | jq -e ".[] | select(.metadata.name==\"$SERVICE_ACCOUNT\" and .metadata.namespace==\"$NS\")" >/dev/null; then
-        
-            echo "service account '$SERVICE_ACCOUNT' exists, deleting..."
-        
-            eksctl delete iamserviceaccount \
-              --cluster "${{ env.CLUSTER_NAME }}" \
-              --region "${{ env.AWS_REGION }}" \
-              --namespace "$NS" \
-              --name "$SERVICE_ACCOUNT"
-          
-          else
-              echo "service account '$SERVICE_ACCOUNT' does not exist"
-          fi
-
       - name: uninstall all helms
         if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
@@ -210,6 +187,29 @@ jobs:
                 aws ec2 delete-security-group --group-id "$sg_id" || echo "Failed to delete $sg_id"
               fi
             done
+
+      - name: uninstall load balancer service account
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          SERVICE_ACCOUNT=aws-load-balancer-controller
+          NS=kube-system
+          
+          if eksctl get iamserviceaccount \
+            --cluster "${{ env.CLUSTER_NAME }}" \
+            --region "${{ env.AWS_REGION }}" \
+            -o json | jq -e ".[] | select(.metadata.name==\"$SERVICE_ACCOUNT\" and .metadata.namespace==\"$NS\")" >/dev/null; then
+        
+            echo "service account '$SERVICE_ACCOUNT' exists, deleting..."
+        
+            eksctl delete iamserviceaccount \
+              --cluster "${{ env.CLUSTER_NAME }}" \
+              --region "${{ env.AWS_REGION }}" \
+              --namespace "$NS" \
+              --name "$SERVICE_ACCOUNT"
+          
+          else
+              echo "service account '$SERVICE_ACCOUNT' does not exist"
+          fi
 
       - name: delete stacks if they exist
         run: |
