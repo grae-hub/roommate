@@ -63,6 +63,7 @@ jobs:
             --region "${{ env.AWS_REGION }}"
 
       - name: test kubeconfig
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
         run: |
           kubectl get ingresses
 
