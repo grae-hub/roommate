@@ -31,3 +31,7 @@ frontend:
             port:
               number: 80
     certificateArn: ""
+    cognito:
+      userPoolArn: ""
+      userPoolClientId: ""
+      userPoolDomainPrefix: ""

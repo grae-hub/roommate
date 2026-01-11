@@ -11,6 +11,13 @@ metadata:
       alb.ingress.kubernetes.io/ssl-redirect: "443"
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
       alb.ingress.kubernetes.io/certificate-arn: {{ .Values.frontend.ingress.certificateArn }}
+      alb.ingress.kubernetes.io/auth-type: cognito
+      alb.ingress.kubernetes.io/auth-idp-cognito: |
+        {
+          "userPoolArn": "{{ .Values.frontend.ingress.cognito.userPoolArn }}",
+          "userPoolClientId": "{{ .Values.frontend.ingress.cognito.userPoolClientId }}",
+          "userPoolDomain": "{{ .Values.frontend.ingress.cognito.userPoolDomainPrefix }}"
+        }
 spec:
     ingressClassName: alb
     rules:
