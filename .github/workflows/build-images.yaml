@@ -36,7 +36,7 @@ jobs:
         with:
           images: grae888/roommate-frontend
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest
 
       - name: build and push frontend
         uses: docker/build-push-action@v6
