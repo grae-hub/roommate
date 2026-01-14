@@ -7,7 +7,7 @@ frontend:
     strategy: Recreate
     replicas: 2
     containerName: frontend
-    containerImage: grae-888/roommate-frontend
+    containerImage: grae888/roommate-frontend
     containerPorts:
       - name: http
         containerPort: 80
