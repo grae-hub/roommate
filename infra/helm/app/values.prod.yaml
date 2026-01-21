@@ -1,12 +1,13 @@
 appName: "roommate"
+env: "prod"
 
 frontend:
   name: roommate-frontend
   deployment:
     strategy: RollingUpdate
     replicas: 2
-    containerName: nginx-app
-    containerImage: nginx:latest
+    containerName: frontend
+    containerImage: grae888/roommate-frontend
     containerPorts:
       - name: http
         containerPort: 80
@@ -17,6 +18,7 @@ frontend:
     storageMin: 100Mi
     storageMax: 2Gi
   service:
+    type: ClusterIP
     ports:
       - name: http
         port: 80

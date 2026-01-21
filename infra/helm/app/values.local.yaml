@@ -1,5 +1,5 @@
 appName: "roommate"
-env: "dev"
+env: "local"
 
 frontend:
   name: roommate-frontend
@@ -18,22 +18,9 @@ frontend:
     storageMin: 100Mi
     storageMax: 1Gi
   service:
-    type: ClusterIP
+    type: NodePort
     ports:
       - name: http
         port: 80
         targetPort: 80
-  ingress:
-    paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: roommate-service
-            port:
-              number: 80
-    certificateArn: ""
-    cognito:
-      userPoolArn: ""
-      userPoolClientId: ""
-      userPoolDomainPrefix: ""
+        nodePort: 30080

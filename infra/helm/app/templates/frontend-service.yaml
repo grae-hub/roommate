@@ -5,7 +5,7 @@ metadata:
     labels:
         app: {{ .Values.frontend.name }}
 spec:
-    type: ClusterIP
+    type: {{ .Values.frontend.service.type }}
     selector:
         app: {{ .Values.frontend.name }}
     ports:
