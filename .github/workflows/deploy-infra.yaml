@@ -64,7 +64,7 @@ jobs:
       vpc_id: ${{ needs.deploy-infra-cfn.outputs.vpc_id }}
 
   deploy-infra-app:
-    needs: [set-env, deploy-infra-cfn, deploy-infra-lb-controller]
+    needs: [set-env, build-image, deploy-infra-cfn, deploy-infra-lb-controller]
     uses: ./.github/workflows/deploy-infra-app.yaml
     secrets: inherit
     with:

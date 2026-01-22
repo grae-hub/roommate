@@ -7,6 +7,25 @@ on:
       environment:
         required: true
         type: string
+    outputs:
+      vpc_id:
+        value: ${{ jobs.deploy.outputs.vpc_id }}
+      cluster_name:
+        value: ${{ jobs.deploy.outputs.cluster_name }}
+      certificate_arn:
+        value: ${{ jobs.deploy.outputs.certificate_arn }}
+      controller_role_arn:
+        value: ${{ jobs.deploy.outputs.controller_role_arn }}
+      node_role:
+        value: ${{ jobs.deploy.outputs.node_role }}
+      node_role_name:
+        value: ${{ jobs.deploy.outputs.node_role_name }}
+      user_pool_arn:
+        value: ${{ jobs.deploy.outputs.user_pool_arn }}
+      user_pool_client_id:
+        value: ${{ jobs.deploy.outputs.user_pool_client_id }}
+      user_pool_domain_prefix:
+        value: ${{ jobs.deploy.outputs.user_pool_domain_prefix }}
 
 permissions:
   id-token: write
