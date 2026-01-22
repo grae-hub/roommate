@@ -1,0 +1,82 @@
+name: deploy karpenter
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      cluster_name:
+        required: true
+        type: string
+      controller_role_arn:
+        required: true
+        type: string
+      node_role:
+        required: true
+        type: string
+      node_role_name:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    env:
+      AWS_REGION: ap-southeast-2
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: install eksctl
+        run: |
+          curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+          tar -xzf eksctl_Linux_amd64.tar.gz
+          sudo mv eksctl /usr/local/bin
+
+      - name: deploy karpenter controller
+        run: |
+          echo "configuring kubectl connection to cluster..."
+          aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region ${AWS_REGION}
+
+          echo "executing karpenter controller helm..."
+          helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
+            --version "1.0.0" \
+            --namespace karpenter \
+            --create-namespace \
+            --set "settings.clusterName=${{ inputs.cluster_name }}" \
+            --set "settings.interruptionQueue=${{ inputs.cluster_name }}" \
+            --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=${{ inputs.controller_role_arn }} \
+            --set replicas=${{ vars.NODE_DESIRED_SIZE }}
+      
+      - name: deploy karpenter nodepool
+        run: |
+          echo "creating node role identity mapping..."
+          eksctl create iamidentitymapping \
+            --cluster "${{ inputs.cluster_name }}" \
+            --arn "${{ inputs.node_role }}" \
+            --username "system:node:{{EC2PrivateDNSName}}" \
+            --group "system:bootstrappers" \
+            --group "system:nodes" \
+            --region "${{ env.AWS_REGION }}"
+
+          echo "executing karpenter nodepool helm..."
+          helm upgrade --install karpenter-nodepool ./infra/helm/karpenter \
+            -f ./infra/helm/karpenter/values.${{ vars.ENV_SHORTHAND }}.yaml \
+            --set appName=${APP_NAME}-${{ vars.ENV_SHORTHAND }} \
+            --set nodeRole=${{ inputs.node_role_name }} \
+            --namespace karpenter

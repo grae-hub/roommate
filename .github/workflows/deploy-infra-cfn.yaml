@@ -1,0 +1,159 @@
+name: deploy cfn
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    env:
+      AWS_REGION: ap-southeast-2
+      NETWORKING_STACK_NAME: roommate-networking-${{ vars.ENV_SHORTHAND }}
+      EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
+      KARPENTER_STACK_NAME: roommate-karpenter-${{ vars.ENV_SHORTHAND }}
+      COGNITO_STACK_NAME: roommate-cognito-${{ vars.ENV_SHORTHAND }}
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: deploy networking cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${NETWORKING_STACK_NAME}" \
+            --template-file infra/cfn/networking.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              Env="${{ vars.ENV_SHORTHAND }}" \
+              VpcCidr="${{ vars.VPC_CIDR }}"
+          
+          echo "getting vpc id..."
+          VPC_ID=$(aws cloudformation describe-stacks \
+          --stack-name ${NETWORKING_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='VpcId'].OutputValue" \
+          --output text)
+          echo "vpc id: '$VPC_ID'"
+          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+
+      - name: deploy eks cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${EKS_STACK_NAME}" \
+            --template-file infra/cfn/eks.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            NetworkStackName="${NETWORKING_STACK_NAME}" \
+            NodeInstanceType="${{ vars.NODE_INSTANCE_TYPE }}" \
+            NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
+            NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
+            NodeMaxSize="${{ vars.NODE_MAX_SIZE }}" \
+            DomainName="${{ vars.DOMAIN_NAME }}" \
+            HostedZoneId="${{ secrets.HOSTED_ZONE_ID }}"
+
+          echo "getting ingress certificate arn..."
+          CERTIFICATE_ARN=$(aws cloudformation describe-stacks \
+          --stack-name ${EKS_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='CertificateArn'].OutputValue" \
+          --output text)
+          echo "certificate arn: '$CERTIFICATE_ARN'"
+          echo "certficate_arn=$CERTIFICATE_ARN" >> $GITHUB_OUTPUT
+
+          echo "getting cluster name..."
+          CLUSTER_NAME=$(aws cloudformation describe-stacks \
+          --stack-name ${EKS_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue" \
+          --output text)
+          echo "cluster name: '$CLUSTER_NAME'"
+          echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+      
+      - name: deploy karpenter cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${KARPENTER_STACK_NAME}" \
+            --template-file infra/cfn/karpenter.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            NetworkStackName="${NETWORKING_STACK_NAME}" \
+            EksStackName="${EKS_STACK_NAME}"
+          
+          echo "getting karpenter controller role arn..."
+          CONTROLLER_ROLE_ARN=$(aws cloudformation describe-stacks \
+          --stack-name ${KARPENTER_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='KarpenterControllerRoleArn'].OutputValue" \
+          --output text)
+          echo "karpenter controller role arn: '$CONTROLLER_ROLE_ARN'"
+          echo "controller_role_arn=$CONTROLLER_ROLE_ARN" >> $GITHUB_OUTPUT
+
+          echo "getting node role arn..."
+          NODE_ROLE=$(aws cloudformation describe-stacks \
+          --stack-name ${KARPENTER_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='KarpenterNodeRoleArn'].OutputValue" \
+          --output text)
+          echo "node role arn: '$NODE_ROLE'"
+          echo "node_role=$NODE_ROLE" >> $GITHUB_OUTPUT
+
+          echo "getting node role name..."
+          NODE_ROLE_NAME="${NODE_ROLE##*/}"
+          echo "node role name: '$NODE_ROLE_NAME'"
+          echo "node_role_name=$NODE_ROLE_NAME" >> $GITHUB_OUTPUT
+
+      - name: deploy cognito cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${COGNITO_STACK_NAME}" \
+            --template-file infra/cfn/cognito.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            DomainName="${{ vars.DOMAIN_NAME }}" \
+            GoogleClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            GoogleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+
+          echo "getting cognito user pool arn..."
+          USER_POOL_ARN=$(aws cloudformation describe-stacks \
+          --stack-name ${COGNITO_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='UserPoolArn'].OutputValue" \
+          --output text)
+          echo "user pool arn: '$USER_POOL_ARN'"
+          echo "user_pool_arn=$USER_POOL_ARN" >> $GITHUB_OUTPUT
+
+          echo "getting cognito user pool client id..."
+          USER_POOL_CLIENT_ID=$(aws cloudformation describe-stacks \
+          --stack-name ${COGNITO_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" \
+          --output text)
+          echo "user pool client id: '$USER_POOL_CLIENT_ID'"
+          echo "user_pool_client_id=$USER_POOL_CLIENT_ID" >> $GITHUB_OUTPUT
+
+          echo "getting cognito user pool domain prefix..."
+          USER_POOL_DOMAIN_PREFIX=$(aws cloudformation describe-stacks \
+          --stack-name ${COGNITO_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='UserPoolDomainPrefix'].OutputValue" \
+          --output text)
+          echo "user pool domain prefix: '$USER_POOL_DOMAIN_PREFIX'"
+          echo "user_pool_domain_prefix=$USER_POOL_DOMAIN_PREFIX" >> $GITHUB_OUTPUT
