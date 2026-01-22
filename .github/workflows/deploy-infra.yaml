@@ -35,6 +35,10 @@ jobs:
   build-image:
     uses: ./.github/workflows/build-images.yaml
     secrets: inherit
+  
+  deploy-cfn:
+    uses: ./.github/workflows/deploy-cfn.yaml
+    secrets: inherit
     
   deploy:
     needs: set-env
@@ -51,9 +55,6 @@ jobs:
       LB_CONTROLLER_VERSION: "2.9.0"
 
     steps:
-      - name: deploy networking cfn
-        run: echo ${{ needs.set-env.outputs.env }}
-
       - name: checkout
         uses: actions/checkout@v4
 
@@ -74,61 +75,6 @@ jobs:
           curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
           tar -xzf eksctl_Linux_amd64.tar.gz
           sudo mv eksctl /usr/local/bin
-
-      - name: deploy networking cfn
-        run: |
-          aws cloudformation deploy \
-            --stack-name "${NETWORKING_STACK_NAME}" \
-            --template-file infra/cfn/networking.yaml \
-            --region "${AWS_REGION}" \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-              Env="${{ vars.ENV_SHORTHAND }}" \
-              VpcCidr="${{ vars.VPC_CIDR }}"
-
-      - name: deploy eks cfn
-        run: |
-          aws cloudformation deploy \
-            --stack-name "${EKS_STACK_NAME}" \
-            --template-file infra/cfn/eks.yaml \
-            --region "${AWS_REGION}" \
-            --no-fail-on-empty-changeset \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --parameter-overrides \
-            Env="${{ vars.ENV_SHORTHAND }}" \
-            NetworkStackName="${NETWORKING_STACK_NAME}" \
-            NodeInstanceType="${{ vars.NODE_INSTANCE_TYPE }}" \
-            NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
-            NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
-            NodeMaxSize="${{ vars.NODE_MAX_SIZE }}" \
-            DomainName="${{ vars.DOMAIN_NAME }}" \
-            HostedZoneId="${{ secrets.HOSTED_ZONE_ID }}"
-      
-      - name: deploy karpenter cfn
-        run: |
-          aws cloudformation deploy \
-            --stack-name "${KARPENTER_STACK_NAME}" \
-            --template-file infra/cfn/karpenter.yaml \
-            --region "${AWS_REGION}" \
-            --no-fail-on-empty-changeset \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --parameter-overrides \
-            Env="${{ vars.ENV_SHORTHAND }}" \
-            NetworkStackName="${NETWORKING_STACK_NAME}" \
-            EksStackName="${EKS_STACK_NAME}"
-
-      - name: deploy cognito cfn
-        run: |
-          aws cloudformation deploy \
-            --stack-name "${COGNITO_STACK_NAME}" \
-            --template-file infra/cfn/cognito.yaml \
-            --region "${AWS_REGION}" \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-            Env="${{ vars.ENV_SHORTHAND }}" \
-            DomainName="${{ vars.DOMAIN_NAME }}" \
-            GoogleClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
-            GoogleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
       
       - name: get helm inputs
         run: |

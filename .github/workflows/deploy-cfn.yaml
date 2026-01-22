@@ -1,0 +1,101 @@
+name: deploy cfn
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.set-env.outputs.env }}
+    steps:
+      - name: Determine environment
+        id: set-env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+          else
+            echo "env=development" >> $GITHUB_OUTPUT
+          fi
+    
+  deploy:
+    needs: set-env
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-env.outputs.env }}
+
+    env:
+      AWS_REGION: ap-southeast-2
+      NETWORKING_STACK_NAME: roommate-networking-${{ vars.ENV_SHORTHAND }}
+      EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
+      KARPENTER_STACK_NAME: roommate-karpenter-${{ vars.ENV_SHORTHAND }}
+      COGNITO_STACK_NAME: roommate-cognito-${{ vars.ENV_SHORTHAND }}
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: deploy networking cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${NETWORKING_STACK_NAME}" \
+            --template-file infra/cfn/networking.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              Env="${{ vars.ENV_SHORTHAND }}" \
+              VpcCidr="${{ vars.VPC_CIDR }}"
+
+      - name: deploy eks cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${EKS_STACK_NAME}" \
+            --template-file infra/cfn/eks.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            NetworkStackName="${NETWORKING_STACK_NAME}" \
+            NodeInstanceType="${{ vars.NODE_INSTANCE_TYPE }}" \
+            NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
+            NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
+            NodeMaxSize="${{ vars.NODE_MAX_SIZE }}" \
+            DomainName="${{ vars.DOMAIN_NAME }}" \
+            HostedZoneId="${{ secrets.HOSTED_ZONE_ID }}"
+      
+      - name: deploy karpenter cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${KARPENTER_STACK_NAME}" \
+            --template-file infra/cfn/karpenter.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            NetworkStackName="${NETWORKING_STACK_NAME}" \
+            EksStackName="${EKS_STACK_NAME}"
+
+      - name: deploy cognito cfn
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${COGNITO_STACK_NAME}" \
+            --template-file infra/cfn/cognito.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            DomainName="${{ vars.DOMAIN_NAME }}" \
+            GoogleClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            GoogleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
