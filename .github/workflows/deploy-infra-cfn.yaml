@@ -34,6 +34,16 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    outputs:
+      vpc_id: ${{ steps.networking.outputs.vpc_id }}
+      cluster_name: ${{ steps.eks.outputs.cluster_name }}
+      certificate_arn: ${{ steps.eks.outputs.certificate_arn }}
+      controller_role_arn: ${{ steps.karpenter.outputs.controller_role_arn }}
+      node_role: ${{ steps.karpenter.outputs.node_role }}
+      node_role_name: ${{ steps.karpenter.outputs.node_role_name }}
+      user_pool_arn: ${{ steps.cognito.outputs.user_pool_arn }}
+      user_pool_client_id: ${{ steps.cognito.outputs.user_pool_client_id }}
+      user_pool_domain_prefix: ${{ steps.cognito.outputs.user_pool_domain_prefix }}
     environment: ${{ inputs.environment }}
 
     env:
@@ -54,6 +64,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: deploy networking cfn
+        id: networking
         run: |
           aws cloudformation deploy \
             --stack-name "${NETWORKING_STACK_NAME}" \
@@ -73,6 +84,7 @@ jobs:
           echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
 
       - name: deploy eks cfn
+        id: eks
         run: |
           aws cloudformation deploy \
             --stack-name "${EKS_STACK_NAME}" \
@@ -107,6 +119,7 @@ jobs:
           echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
       
       - name: deploy karpenter cfn
+        id: karpenter
         run: |
           aws cloudformation deploy \
             --stack-name "${KARPENTER_STACK_NAME}" \
@@ -141,6 +154,7 @@ jobs:
           echo "node_role_name=$NODE_ROLE_NAME" >> $GITHUB_OUTPUT
 
       - name: deploy cognito cfn
+        id: cognito
         run: |
           aws cloudformation deploy \
             --stack-name "${COGNITO_STACK_NAME}" \
