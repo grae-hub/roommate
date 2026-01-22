@@ -48,11 +48,13 @@ jobs:
           tar -xzf eksctl_Linux_amd64.tar.gz
           sudo mv eksctl /usr/local/bin
 
-      - name: deploy karpenter controller
+      - name: update kubeconfig
         run: |
           echo "configuring kubectl connection to cluster..."
           aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region ${AWS_REGION}
 
+      - name: deploy karpenter controller
+        run: |
           echo "executing karpenter controller helm..."
           helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
             --version "1.0.0" \

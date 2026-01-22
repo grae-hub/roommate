@@ -69,6 +69,7 @@ jobs:
     secrets: inherit
     with:
       environment: ${{ needs.set-env.outputs.env }}
+      cluster_name: ${{ needs.deploy-infra-cfn.outputs.cluster_name }}
       certificate_arn: ${{ needs.deploy-infra-cfn.outputs.certificate_arn }}
       user_pool_arn: ${{ needs.deploy-infra-cfn.outputs.user_pool_arn }}
       user_pool_client_id: ${{ needs.deploy-infra-cfn.outputs.user_pool_client_id }}

@@ -7,6 +7,9 @@ on:
       environment:
         required: true
         type: string
+      cluster_name:
+        required: true
+        type: string
       certificate_arn:
         required: true
         type: string
@@ -48,6 +51,11 @@ jobs:
         with:
           username: grae888
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: update kubeconfig
+        run: |
+          echo "configuring kubectl connection to cluster..."
+          aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region ${AWS_REGION}
   
       - name: deploy app infra
         run: |
