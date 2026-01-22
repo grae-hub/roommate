@@ -3,30 +3,19 @@ name: deploy cfn
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  set-env:
-    runs-on: ubuntu-latest
-    outputs:
-      env: ${{ steps.set-env.outputs.env }}
-    steps:
-      - name: Determine environment
-        id: set-env
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "env=production" >> $GITHUB_OUTPUT
-          else
-            echo "env=development" >> $GITHUB_OUTPUT
-          fi
-    
   deploy:
-    needs: set-env
     runs-on: ubuntu-latest
-    environment: ${{ needs.set-env.outputs.env }}
+    environment: ${{ inputs.environment }}
 
     env:
       AWS_REGION: ap-southeast-2

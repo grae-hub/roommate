@@ -37,11 +37,14 @@ jobs:
     secrets: inherit
   
   deploy-cfn:
+    needs: set-env
     uses: ./.github/workflows/deploy-cfn.yaml
     secrets: inherit
+    with:
+      environment: ${{ needs.set-env.outputs.env }}
     
   deploy:
-    needs: set-env
+    needs: [set-env, build-image, deploy-cfn]
     runs-on: ubuntu-latest
     environment: ${{ needs.set-env.outputs.env }}
 
