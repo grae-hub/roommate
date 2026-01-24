@@ -108,7 +108,7 @@ jobs:
           --query "Stacks[0].Outputs[?OutputKey=='CertificateArn'].OutputValue" \
           --output text)
           echo "certificate arn: '$CERTIFICATE_ARN'"
-          echo "certficate_arn=$CERTIFICATE_ARN" >> $GITHUB_OUTPUT
+          echo "certificate_arn=$CERTIFICATE_ARN" >> $GITHUB_OUTPUT
 
           echo "getting cluster name..."
           CLUSTER_NAME=$(aws cloudformation describe-stacks \
