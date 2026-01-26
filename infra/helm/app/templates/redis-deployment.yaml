@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.redis.name }}-deployment
+  labels:
+    app: {{ .Values.redis.name }}
+spec:
+  strategy:
+        type: {{ .Values.redis.deployment.strategy }}
+  selector:
+    matchLabels:
+        app: {{ .Values.redis.name }}
+  replicas: {{ .Values.redis.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.redis.name }}
+  template:
+    metadata:
+      name: {{ .Values.redis.name }}-pod
+      labels:
+        app: {{ .Values.redis.name }}
+    spec:
+      containers:
+        - name: {{ .Values.redis.deployment.containerName }}
+          image: {{ .Values.redis.deployment.containerImage }}
+          ports:
+{{- toYaml .Values.redis.deployment.containerPorts | nindent 20 }}
+          resources:
+            requests:
+                cpu: {{ .Values.redis.deployment.cpuMin }}
+                memory: {{ .Values.redis.deployment.memMin }}
+                ephemeral-storage: {{ .Values.redis.deployment.storageMin }}
+            limits:
+                cpu: {{ .Values.redis.deployment.cpuMax }}
+                memory: {{ .Values.redis.deployment.memMax }}
+                ephemeral-storage: {{ .Values.redis.deployment.storageMax }}

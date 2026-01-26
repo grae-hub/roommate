@@ -24,3 +24,26 @@ frontend:
         port: 80
         targetPort: 80
         nodePort: 30080
+
+redis:
+  name: roommate-redis
+  deployment:
+    strategy: Recreate
+    replicas: 2
+    containerName: redis
+    containerImage: redis:7-alpine
+    containerPorts:
+      - name: redis
+        containerPort: 6379
+    cpuMin: 100m
+    cpuMax: 300m
+    memMin: 128Mi
+    memMax: 256Mi
+    storageMin: 100Mi
+    storageMax: 1Gi
+  service:
+    type: ClusterIP
+    ports:
+      - name: redis
+        port: 6379
+        targetPort: 6379

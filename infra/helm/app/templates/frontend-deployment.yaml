@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: {{ .Values.appName }}-deployment
+    name: {{ .Values.frontend.name }}-deployment
     labels:
         app: {{ .Values.frontend.name }}
 spec:
@@ -13,7 +13,7 @@ spec:
     replicas: {{ .Values.frontend.deployment.replicas }}
     template:
         metadata:
-            name: {{ .Values.appName }}-pod
+            name: {{ .Values.frontend.name }}-pod
             labels:
                 app: {{ .Values.frontend.name }}
         spec:
