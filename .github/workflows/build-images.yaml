@@ -31,7 +31,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: extract metadata frontend
-        id: meta
+        id: meta-frontend
         uses: docker/metadata-action@v5
         with:
           images: grae888/roommate-frontend
@@ -43,7 +43,25 @@ jobs:
         with:
           context: src/app/frontend
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: extract metadata backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: grae888/roommate-backend
+          tags: |
+            type=raw,value=latest
+
+      - name: build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: src/app/backend
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
