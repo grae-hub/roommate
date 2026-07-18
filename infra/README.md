@@ -24,17 +24,17 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 - ACM certificate: requested and DNS-validated upfront so that it's ready for when ingress needs it later on in deployment
 
 **`karpenter.yaml`**
-- Karpenter node IAM role
-- Karpenter controller IAM policy + role
-- SQS interruption queue
-- EventBridge rules
-- Node security group
+- Karpenter node IAM role: role given to ec2 nodes karpenter launches so they can join the cluster
+- Karpenter controller IAM policy + role: role given to karpenter controller pods such that they can create and destroy ec2 nodes, can only be assumed via IRSA by pods with karpenter service account
+- SQS interruption queue: receives spot interruption, instance health, and rebalance events so Karpenter can react before a node disappears
+- EventBridge rules: forwards AWS events into the interruption queue
+- Node security group: controls what traffic is allowed to/from Karpenter provisioned nodes and the control plane
 
 **`cognito.yaml`**
-- Cognito user pool
-- Google identity provider
-- User pool domain
-- User pool client
+- Cognito user pool: directory of users including accounts, passwords, verified emails, federated identities
+- Google identity provider: lets users log in with an existing Google account instead of creating a new password. This is associated with our user pool
+- User pool domain: hosted UI for login
+- User pool client: config that strings together our domain, user pool, and identity providers. Will be used by our alb
 
 ### Helm (`helm/`)
 
@@ -46,3 +46,7 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 ### networking
 
 ![networking stack](diagrams/networking.png)
+
+### eks
+
+![eks stack](diagrams/eks.png)
