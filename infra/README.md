@@ -38,8 +38,18 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 
 ### Helm (`helm/`)
 
-- `app/` — frontend, backend, and redis Deployments/Services, plus the frontend Ingress (ALB + Cognito auth)
-- `karpenter/` — NodePool/EC2NodeClass config controlling what EC2 instances Karpenter provisions
+**`karpenter controller`**
+This chart is not defined by us, instead sourced from a public aws chart.
+
+Deploys the karpenter autoscaling software onto our eks cluster.
+
+**`karpenter/`**
+Config that tells our karpenter controller what it is allowed to launch.
+
+- ec2nodeclass: environment karpenter nodes are built into. Identity, network placement, and the base image
+- nodepool: instance specs for karpenter nodes. Shape of instance (arch, pricing model, size category) and how much of it the pool is allowed to produce
+
+**`app/`** frontend, backend, and redis Deployments/Services, plus the frontend Ingress (ALB + Cognito auth)
 
 ## Diagrams
 
