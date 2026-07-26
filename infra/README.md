@@ -49,7 +49,11 @@ Config that tells our karpenter controller what it is allowed to launch.
 - ec2nodeclass: environment karpenter nodes are built into. Identity, network placement, and the base image
 - nodepool: instance specs for karpenter nodes. Shape of instance (arch, pricing model, size category) and how much of it the pool is allowed to produce
 
-**`app/`** frontend, backend, and redis Deployments/Services, plus the frontend Ingress (ALB + Cognito auth)
+**`app/`**
+Deploys the actual application onto the infra (with the exception of the ingress which itself deploys new infra).
+
+- Backend/Redis: replica pods (2 by default) running a container image, load-balanced internally via a ClusterIP Service
+- Frontend: the same pattern (replica pods + ClusterIP Service), plus an Ingress in front of it. provisions new an ALB, attaches TLS + Cognito auth, and makes our cluster reachable from the internet
 
 ## Diagrams
 
