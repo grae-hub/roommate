@@ -19,7 +19,7 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 - EksClusterRole: lets the EKS control plane call other AWS APIs on your behalf
 - NodeInstanceRole: lets worker nodes register with the cluster, use the VPC CNI, pull images from ECR, and be managed via SSM
 - EKS cluster: the AWS managed control plain that runs and coordinates the cluster, targets all subnets in our VPC
-- Managed node group: the EC2 nodes that run the pods, placed in the private subnets
+- Managed node group: ASG of EC2 nodes that run the pods, placed in the private subnets
 - OIDC provider: enables IRSA, so a pod's service account can assume its own specific IAM role instead of inheriting the whole node's shared role
 - ACM certificate: requested and DNS-validated upfront so that it's ready for when ingress needs it later on in deployment
 
@@ -53,7 +53,7 @@ Config that tells our karpenter controller what it is allowed to launch.
 Deploys the actual application onto the infra (with the exception of the ingress which itself deploys new infra).
 
 - Backend/Redis: replica pods (2 by default) running a container image, load-balanced internally via a ClusterIP Service
-- Frontend: the same pattern (replica pods + ClusterIP Service), plus an Ingress in front of it. provisions new an ALB, attaches TLS + Cognito auth, and makes our cluster reachable from the internet
+- Frontend: the same pattern (replica pods + ClusterIP Service), plus an Ingress in front of it. provisions an ALB, attaches TLS + Cognito auth, and makes our cluster reachable from the internet
 
 ## Diagrams
 
@@ -62,5 +62,8 @@ Deploys the actual application onto the infra (with the exception of the ingress
 ![networking stack](diagrams/networking.png)
 
 ### eks
-
+*note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG*
 ![eks stack](diagrams/eks.png)
+
+## karpenter controller (helm)
+![karpenter controller helm](diagrams/karpenter-controller.png)
