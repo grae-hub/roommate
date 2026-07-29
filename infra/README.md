@@ -65,5 +65,9 @@ Deploys the actual application onto the infra (with the exception of the ingress
 *note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG*
 ![eks stack](diagrams/eks.png)
 
-## karpenter controller (helm)
+### karpenter controller (helm)
 ![karpenter controller helm](diagrams/karpenter-controller.png)
+
+### karpenter (helm)
+*provides the instructions/config that enable karpenter worker nodes to be created*
+![karpenter helm](diagrams/karpenter.png)
