@@ -71,3 +71,7 @@ Deploys the actual application onto the infra (with the exception of the ingress
 ### karpenter (helm)
 *provides the instructions/config that enable karpenter worker nodes to be created*
 ![karpenter helm](diagrams/karpenter.png)
+
+### app (helm)
+*app pods will trigger karpenter to create worker nodes where there are not sufficient resources for pending pods*
+![kapp helm](diagrams/app.png)
