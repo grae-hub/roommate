@@ -1,8 +1,9 @@
-# Infra
+# Roommate App
 
-This directory provisions the AWS platform roommate runs on (CloudFormation), and deploys the Kubernetes workloads on top of it (Helm).
+## /infra
+Our application runs on a Kubernetes cluster with Karpenter handling autoscaling. This directory provisions the AWS platform it runs using CloudFormation, and deploys the Kubernetes workloads on top of it using Helm.
 
-## What's deployed
+Not that this is more infrastructure than an app this size actually needs, it could run with a more lightweight setup. The setup exists mainly as a technical showcase of EKS, Karpenter, and the surrounding AWS ecosystem.
 
 ### CloudFormation (`cfn/`)
 
@@ -15,6 +16,8 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 - NAT gateway(s)
 - Route tables
 
+![networking stack](diagrams/networking.png)
+
 **`eks.yaml`**
 - EksClusterRole: lets the EKS control plane call other AWS APIs on your behalf
 - NodeInstanceRole: lets worker nodes register with the cluster, use the VPC CNI, pull images from ECR, and be managed via SSM
@@ -22,6 +25,9 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 - Managed node group: ASG of EC2 nodes that run the pods, placed in the private subnets
 - OIDC provider: enables IRSA, so a pod's service account can assume its own specific IAM role instead of inheriting the whole node's shared role
 - ACM certificate: requested and DNS-validated upfront so that it's ready for when ingress needs it later on in deployment
+
+*note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG*
+![eks stack](diagrams/eks.png)
 
 **`karpenter.yaml`**
 - Karpenter node IAM role: role given to ec2 nodes karpenter launches so they can join the cluster
@@ -43,11 +49,16 @@ This chart is not defined by us, instead sourced from a public aws chart.
 
 Deploys the karpenter autoscaling software onto our eks cluster.
 
+![karpenter controller helm](diagrams/karpenter-controller.png)
+
 **`karpenter/`**
 Config that tells our karpenter controller what it is allowed to launch.
 
 - ec2nodeclass: environment karpenter nodes are built into. Identity, network placement, and the base image
 - nodepool: instance specs for karpenter nodes. Shape of instance (arch, pricing model, size category) and how much of it the pool is allowed to produce
+
+*provides the instructions/config that enable karpenter worker nodes to be created*
+![karpenter helm](diagrams/karpenter.png)
 
 **`app/`**
 Deploys the actual application onto the infra (with the exception of the ingress which itself deploys new infra).
@@ -55,23 +66,5 @@ Deploys the actual application onto the infra (with the exception of the ingress
 - Backend/Redis: replica pods (2 by default) running a container image, load-balanced internally via a ClusterIP Service
 - Frontend: the same pattern (replica pods + ClusterIP Service), plus an Ingress in front of it. provisions an ALB, attaches TLS + Cognito auth, and makes our cluster reachable from the internet
 
-## Diagrams
-
-### networking
-
-![networking stack](diagrams/networking.png)
-
-### eks
-*note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG*
-![eks stack](diagrams/eks.png)
-
-### karpenter controller (helm)
-![karpenter controller helm](diagrams/karpenter-controller.png)
-
-### karpenter (helm)
-*provides the instructions/config that enable karpenter worker nodes to be created*
-![karpenter helm](diagrams/karpenter.png)
-
-### app (helm)
 *app pods will trigger karpenter to create worker nodes where there are not sufficient resources for pending pods*
-![kapp helm](diagrams/app.png)
+![app helm](diagrams/app.png)
