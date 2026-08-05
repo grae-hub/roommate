@@ -6,9 +6,7 @@ Our application runs on a Kubernetes cluster with Karpenter handling autoscaling
 
 Note that this is more infrastructure than an app this size actually needs, it could run with a more lightweight setup. The setup exists mainly as a technical showcase of EKS, Karpenter, and the surrounding AWS ecosystem.
 
----
-
-### CloudFormation (`cfn/`)
+### /infra/cfn
 
 Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 
@@ -38,10 +36,10 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 - OIDC provider: enables IRSA, so a pod's service account can assume its own specific IAM role instead of inheriting the whole node's shared role
 - ACM certificate: requested and DNS-validated upfront so that it's ready for when ingress needs it later on in deployment
 
-*note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG*
-
 <details>
 <summary><b>Diagram</b></summary>
+
+*note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG*
 
 <img src="diagrams/eks.png" width="700" alt="eks stack">
 
@@ -68,7 +66,7 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 
 ---
 
-### Helm (`helm/`)
+### /infra/helm
 
 #### `karpenter controller`
 
@@ -92,10 +90,10 @@ Config that tells our karpenter controller what it is allowed to launch.
 - ec2nodeclass: environment karpenter nodes are built into. Identity, network placement, and the base image
 - nodepool: instance specs for karpenter nodes. Shape of instance (arch, pricing model, size category) and how much of it the pool is allowed to produce
 
-*provides the instructions/config that enable karpenter worker nodes to be created*
-
 <details>
 <summary><b>Diagram</b></summary>
+
+*provides the instructions/config that enable karpenter worker nodes to be created*
 
 <img src="diagrams/karpenter.png" width="700" alt="karpenter helm">
 
@@ -110,10 +108,10 @@ Deploys the actual application onto the infra (with the exception of the ingress
 - Backend/Redis: replica pods (2 by default) running a container image, load-balanced internally via a ClusterIP Service
 - Frontend: the same pattern (replica pods + ClusterIP Service), plus an Ingress in front of it. provisions an ALB, attaches TLS + Cognito auth, and makes our cluster reachable from the internet
 
-*app pods will trigger karpenter to create worker nodes where there are not sufficient resources for pending pods*
-
 <details>
 <summary><b>Diagram</b></summary>
+
+*app pods will trigger karpenter to create worker nodes where there are not sufficient resources for pending pods*
 
 <img src="diagrams/app.png" width="700" alt="app helm">
 
