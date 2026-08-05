@@ -20,12 +20,13 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 - NAT gateway(s)
 - Route tables
 
-<details>
-<summary>Diagram</summary>
-
-<img src="diagrams/networking.png" width="700" alt="networking stack">
-
-</details>
+> [!TIP]
+> <details>
+> <summary>📐 View diagram</summary>
+>
+> <img src="diagrams/networking.png" width="700" alt="networking stack">
+>
+> </details>
 
 <br>
 
@@ -40,12 +41,13 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 
 *note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG*
 
-<details>
-<summary>Diagram</summary>
-
-<img src="diagrams/eks.png" width="700" alt="eks stack">
-
-</details>
+> [!TIP]
+> <details>
+> <summary>📐 View diagram</summary>
+>
+> <img src="diagrams/eks.png" width="700" alt="eks stack">
+>
+> </details>
 
 <br>
 
@@ -76,12 +78,13 @@ This chart is not defined by us, instead sourced from a public aws chart.
 
 Deploys the karpenter autoscaling software onto our eks cluster.
 
-<details>
-<summary>Diagram</summary>
-
-<img src="diagrams/karpenter-controller.png" width="700" alt="karpenter controller helm">
-
-</details>
+> [!TIP]
+> <details>
+> <summary>📐 View diagram</summary>
+>
+> <img src="diagrams/karpenter-controller.png" width="700" alt="karpenter controller helm">
+>
+> </details>
 
 <br>
 
@@ -94,12 +97,13 @@ Config that tells our karpenter controller what it is allowed to launch.
 
 *provides the instructions/config that enable karpenter worker nodes to be created*
 
-<details>
-<summary>Diagram</summary>
-
-<img src="diagrams/karpenter.png" width="700" alt="karpenter helm">
-
-</details>
+> [!TIP]
+> <details>
+> <summary>📐 View diagram</summary>
+>
+> <img src="diagrams/karpenter.png" width="700" alt="karpenter helm">
+>
+> </details>
 
 <br>
 
@@ -112,9 +116,10 @@ Deploys the actual application onto the infra (with the exception of the ingress
 
 *app pods will trigger karpenter to create worker nodes where there are not sufficient resources for pending pods*
 
-<details>
-<summary>Diagram</summary>
-
-<img src="diagrams/app.png" width="700" alt="app helm">
-
-</details>
+> [!TIP]
+> <details>
+> <summary>📐 View diagram</summary>
+>
+> <img src="diagrams/app.png" width="700" alt="app helm">
+>
+> </details>
