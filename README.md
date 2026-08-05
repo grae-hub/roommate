@@ -68,6 +68,8 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 
 ### /infra/helm
 
+Helm charts, deployed in order by `deploy-infra-*.yaml`.
+
 #### `karpenter controller`
 
 This chart is not defined by us, instead sourced from a public aws chart.
