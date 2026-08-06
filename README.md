@@ -8,20 +8,22 @@ Note that this is more infrastructure than an app this size actually needs, it c
 
 ### /infra/cfn
 
-Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
+CloudFormation stacks that deploy our AWS platform.
+
+![cfn infra](diagrams/cfn.png)
 
 #### `networking.yaml`
 
-- VPC
-- Public + private subnets
-- Internet Gateway
-- NAT gateway(s)
-- Route tables
+- **VPC**
+- **Public + Private Subnets**
+- **Internet Gateway**
+- **NAT Gateway(s)**
+- **Route Tables**
 
 <details>
 <summary><b>Diagram</b></summary>
 
-<img src="diagrams/networking.png" width="700" alt="networking stack">
+<img src="diagrams/networking.png" width="640" alt="networking stack">
 
 </details>
 
@@ -29,19 +31,19 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 
 #### `eks.yaml`
 
-- EksClusterRole: lets the EKS control plane call other AWS APIs on your behalf
-- NodeInstanceRole: lets worker nodes register with the cluster, use the VPC CNI, pull images from ECR, and be managed via SSM
-- EKS cluster: the AWS managed control plain that runs and coordinates the cluster, targets all subnets in our VPC
-- Managed node group: ASG of EC2 nodes that run the pods, placed in the private subnets
-- OIDC provider: enables IRSA, so a pod's service account can assume its own specific IAM role instead of inheriting the whole node's shared role
-- ACM certificate: requested and DNS-validated upfront so that it's ready for when ingress needs it later on in deployment
+- **EksClusterRole:** Lets the EKS control plane call other AWS APIs on your behalf
+- **NodeInstanceRole:** Lets worker nodes register with the cluster, use the VPC CNI, pull images from ECR, and be managed via SSM
+- **EKS Cluster:** The AWS managed control plane that runs and coordinates the cluster, targets all subnets in our VPC
+- **Managed Node Group:** ASG of EC2 nodes that run the pods, placed in the private subnets
+- **OIDC Provider:** Enables IRSA, so a pod's service account can assume its own specific IAM role instead of inheriting the whole node's shared role
+- **ACM Certificate:** Requested and DNS-validated upfront so that it's ready for when Ingress needs it later on in deployment
 
 <details>
 <summary><b>Diagram</b></summary>
 
-*note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG*
+<p><em>Note that our node group has a 'DesiredSize' of 1, so only 1 node is actually deployed in this ASG</p></em>
 
-<img src="diagrams/eks.png" width="700" alt="eks stack">
+<img src="diagrams/eks.png" width="640" alt="eks stack">
 
 </details>
 
@@ -49,55 +51,45 @@ Four stacks, deployed in order by `deploy-infra-cfn.yaml`.
 
 #### `karpenter.yaml`
 
-- Karpenter node IAM role: role given to ec2 nodes karpenter launches so they can join the cluster
-- Karpenter controller IAM policy + role: role given to karpenter controller pods such that they can create and destroy ec2 nodes, can only be assumed via IRSA by pods with karpenter service account
-- SQS interruption queue: receives spot interruption, instance health, and rebalance events so Karpenter can react before a node disappears
-- EventBridge rules: forwards AWS events into the interruption queue
-- Node security group: controls what traffic is allowed to/from Karpenter provisioned nodes and the control plane
+- **Karpenter Node IAM Role:** Role given to EC2 nodes Karpenter launches so they can join the cluster
+- **Karpenter Controller IAM Policy + Role:** Role given to Karpenter controller pods such that they can create and destroy EC2 nodes, can only be assumed via IRSA by pods with Karpenter service account
+- **SQS Interruption Queue:** Receives spot interruption, instance health, and rebalance events so Karpenter can react before a node disappears
+- **EventBridge Rules:** Forwards AWS events into the interruption queue
+- **Node Security Group:** Controls what traffic is allowed to/from Karpenter provisioned nodes and the control plane
 
 <br>
 
 #### `cognito.yaml`
 
-- Cognito user pool: directory of users including accounts, passwords, verified emails, federated identities
-- Google identity provider: lets users log in with an existing Google account instead of creating a new password. This is associated with our user pool
-- User pool domain: hosted UI for login
-- User pool client: config that strings together our domain, user pool, and identity providers. Will be used by our alb
+- **Cognito User Pool:** Directory of users including accounts, passwords, verified emails, federated identities
+- **Google Identity Provider:** Lets users log in with an existing Google account instead of creating a new password. This is associated with our user pool
+- **User Pool Domain:** Hosted UI for login
+- **User Pool Client:** Config that strings together our domain, user pool, and identity providers. Will be used by our ALB
 
 ---
 
 ### /infra/helm
 
-Helm charts, deployed in order by `deploy-infra-*.yaml`.
+Helm charts, deploy the Kubernetes workloads on top of our AWS infrastructure.
 
-#### `karpenter controller`
-
-This chart is not defined by us, instead sourced from a public aws chart.
-
-Deploys the karpenter autoscaling software onto our eks cluster.
-
-<details>
-<summary><b>Diagram</b></summary>
-
-<img src="diagrams/karpenter-controller.png" width="700" alt="karpenter controller helm">
-
-</details>
-
-<br>
+![helm infra](diagrams/helm.png)
 
 #### `karpenter/`
 
-Config that tells our karpenter controller what it is allowed to launch.
+Config that tells our Karpenter controller what it is allowed to launch.
 
-- ec2nodeclass: environment karpenter nodes are built into. Identity, network placement, and the base image
-- nodepool: instance specs for karpenter nodes. Shape of instance (arch, pricing model, size category) and how much of it the pool is allowed to produce
+- **EC2NodeClass:** Environment Karpenter nodes are built into. Identity, network placement, and the base image
+- **NodePool:** Instance specs for Karpenter nodes. Shape of instance (arch, pricing model, size category) and how much of it the pool is allowed to produce
+
+[!NOTE]
+Requires the **Karpenter controller** public AWS Helm chart to be deployed onto our cluster before this configuration does anything.
 
 <details>
 <summary><b>Diagram</b></summary>
 
-*provides the instructions/config that enable karpenter worker nodes to be created*
+<p><em>Provides the instructions/config that enable Karpenter worker nodes to be created</p></em>
 
-<img src="diagrams/karpenter.png" width="700" alt="karpenter helm">
+<img src="diagrams/karpenter.png" width="640" alt="karpenter helm">
 
 </details>
 
@@ -105,16 +97,19 @@ Config that tells our karpenter controller what it is allowed to launch.
 
 #### `app/`
 
-Deploys the actual application onto the infra (with the exception of the ingress which itself deploys new infra).
+Deploys the actual application onto the infra (with the exception of the Ingress which itself deploys new infra).
 
-- Backend/Redis: replica pods (2 by default) running a container image, load-balanced internally via a ClusterIP Service
-- Frontend: the same pattern (replica pods + ClusterIP Service), plus an Ingress in front of it. provisions an ALB, attaches TLS + Cognito auth, and makes our cluster reachable from the internet
+- **Backend/Redis:** Replica pods (2 by default) running a container image, load-balanced internally via a ClusterIP Service
+- **Frontend:** The same pattern (replica pods + ClusterIP Service), plus an Ingress in front of it. Provisions an ALB, attaches TLS + Cognito auth, and makes our cluster reachable from the internet
+
+[!NOTE]
+For our frontend Ingress to function here we first need to deploy the **Load Balancer Controller** public AWS Helm chart along with its associated IAM resources.
 
 <details>
 <summary><b>Diagram</b></summary>
 
-*app pods will trigger karpenter to create worker nodes where there are not sufficient resources for pending pods*
+<p><em>App pods will trigger Karpenter to create worker nodes where there are not sufficient resources for pending pods</p></em>
 
-<img src="diagrams/app.png" width="700" alt="app helm">
+<img src="diagrams/app.png" width="640" alt="app helm">
 
 </details>
