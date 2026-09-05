@@ -22,6 +22,17 @@ spec:
                   image: {{ .Values.backend.deployment.containerImage }}
                   ports:
 {{- toYaml .Values.backend.deployment.containerPorts | nindent 20 }}
+                  env:
+                    - name: DB_HOST
+                      value: "{{ .Values.backend.env.dbHost }}"
+                    - name: DB_PORT
+                      value: "{{ .Values.backend.env.dbPort }}"
+                    - name: DB_NAME
+                      value: "{{ .Values.backend.env.dbName }}"
+                    - name: DB_USER
+                      value: "{{ .Values.backend.env.dbUser }}"
+                    - name: DB_PASSWORD
+                      value: "{{ .Values.backend.env.dbPassword }}"
                   resources:
                     requests:
                         cpu: {{ .Values.backend.deployment.cpuMin }}

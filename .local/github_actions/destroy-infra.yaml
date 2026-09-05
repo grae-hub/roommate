@@ -1,0 +1,192 @@
+name: destroy infra
+
+on:
+  schedule:
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          environment: [development, production]
+    
+    environment: ${{ matrix.environment }}
+
+    env:
+        AWS_REGION: ap-southeast-2
+        EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
+        STACKS_TO_DELETE: |
+            roommate-karpenter-${{ vars.ENV_SHORTHAND }}
+            roommate-eks-${{ vars.ENV_SHORTHAND }}
+            roommate-networking-${{ vars.ENV_SHORTHAND }}
+        KARPENTER_ROLE_NAME: KarpenterNodeRole-roommate-eks-cluster-${{ vars.ENV_SHORTHAND }}
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ vars.AWS_REGION }}
+            role-to-assume: ${{ secrets.AWS_ROLE }}
+            role-session-name: local-github-workflow
+      
+      - name: configure kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.32.0'
+      
+      - name: configure kubeconfig for eks
+        id: configure-kubeconfig
+        run: |
+          echo "checking eks stack exists..."
+          STACK_STATUS=$(aws cloudformation describe-stacks \
+            --stack-name "${EKS_STACK_NAME}" \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+
+          if [[ "$STACK_STATUS" == "DOES_NOT_EXIST" || "$STACK_STATUS" == "DELETE_COMPLETE" ]]; then
+            echo "stack '${EKS_STACK_NAME}' does not exist or is deleted"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          
+          echo "getting cluster name..."
+          CLUSTER_NAME=$(aws cloudformation describe-stacks \
+            --stack-name "${EKS_STACK_NAME}" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ClusterName`].OutputValue' \
+            --output text)
+          
+          echo "cluster name: '$CLUSTER_NAME'"
+          
+          aws eks update-kubeconfig \
+            --name "$CLUSTER_NAME" \
+            --region "${{ env.AWS_REGION }}"
+
+      - name: scale deployments to zero
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
+
+          # loop over namespaces
+          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}"); do
+            echo "Processing namespace: ${ns}"
+
+            # loop over deployments in namespace
+            deploys=$(kubectl get deploy -n "${ns}" --no-headers 2>/dev/null | awk '{print $1}')
+
+            if [ -z "${deploys}" ]; then
+              echo "no deployments in ${ns}"
+              continue
+            fi
+
+            for d in $deploys; do
+              echo "scaling deployment/${d} in ${ns} to 0"
+              kubectl scale deployment "${d}" -n "${ns}" --replicas=0
+            done
+          done
+
+      - name: wait for pods to scale
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          IGNORE_NS_REGEX='^[[:space:]]*(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)[[:space:]]'
+
+          timeout_seconds=600
+          end=$((SECONDS + timeout_seconds))
+
+          while [ $SECONDS -lt $end ]; do
+            remaining_pods=$(kubectl get pods -A \
+              --field-selector=status.phase!=Succeeded,status.phase!=Failed \
+              --no-headers 2>/dev/null | \
+              grep -Ev "$IGNORE_NS_REGEX" || true)
+
+            if [ -n "$remaining_pods" ]; then
+              echo "remaining pods:"
+              echo "$remaining_pods"
+            fi
+
+            if [ -z "$remaining_pods" ]; then
+              remaining=0
+            else
+              remaining=$(printf '%s\n' "$remaining_pods" | wc -l)
+            fi
+
+            if [ "${remaining}" -eq 0 ]; then
+              echo "all pods terminated"
+              exit 0
+            fi
+
+            echo "${remaining} non-system pods still running..."
+            sleep 10
+          done
+
+          echo "timed out"
+          exit 1
+
+      - name: delete all services
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          IGNORE_NS_REGEX='^(kube-system|kube-public|kube-node-lease|karpenter|amazon-cloudwatch)$'
+      
+          # loop over namespaces
+          for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -Ev "${IGNORE_NS_REGEX}"); do
+            echo "Processing namespace: ${ns}"
+
+            # list services excluding the default Kubernetes service
+            services=$(kubectl get svc -n "${ns}" --no-headers 2>/dev/null | awk '{print $1}' | grep -v '^kubernetes$' || true)
+      
+            if [ -z "${services}" ]; then
+              echo "no services in ${ns}"
+              continue
+            fi
+      
+            for s in $services; do
+              echo "deleting service/${s} in ${ns}"
+              kubectl delete svc "${s}" -n "${ns}" --wait=true
+            done
+          done
+
+      - name: disassociate role from instance profile
+        if: steps.configure-kubeconfig.outputs.skip != 'true'
+        run: |
+          profiles=$(aws iam list-instance-profiles-for-role \
+            --role-name "$KARPENTER_ROLE_NAME" \
+            --query 'InstanceProfiles[].InstanceProfileName' \
+            --output text)
+          
+          if [ -z "$profiles" ]; then
+            echo "no instance profiles associated with role '$KARPENTER_ROLE_NAME'"
+            exit 0
+          fi
+
+          for profile in $profiles; do
+            echo "processing profile: $profile"
+
+            echo "disasociating role..."
+            aws iam remove-role-from-instance-profile \
+              --instance-profile-name "$profile" \
+              --role-name "$KARPENTER_ROLE_NAME"
+          done
+
+      - name: delete stacks if they exist
+        run: |
+          for stack in $STACKS_TO_DELETE; do
+            echo "checking stack '$stack' exists"
+            
+            if aws cloudformation describe-stacks --stack-name "$stack" >/dev/null 2>&1; then
+              echo "deleting stack '$stack'..."
+              aws cloudformation delete-stack --stack-name "$stack"
+              aws cloudformation wait stack-delete-complete --stack-name "$stack"
+              echo "stack '$stack' deleted"
+            else
+              echo "stack '$stack' does not exist, skipping"
+            fi
+          done

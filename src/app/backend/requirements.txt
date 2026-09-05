@@ -2,3 +2,4 @@ django
 djangorestframework
 redis
 gunicorn
+psycopg2-binary

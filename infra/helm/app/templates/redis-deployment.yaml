@@ -7,9 +7,6 @@ metadata:
 spec:
   strategy:
         type: {{ .Values.redis.deployment.strategy }}
-  selector:
-    matchLabels:
-        app: {{ .Values.redis.name }}
   replicas: {{ .Values.redis.deployment.replicas }}
   selector:
     matchLabels:

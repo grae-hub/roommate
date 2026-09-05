@@ -63,6 +63,12 @@ redis:
 
 backend:
   name: roommate-backend
+  env:
+    dbHost: ""
+    dbPort: "5432"
+    dbName: ""
+    dbUser: ""
+    dbPassword: ""
   deployment:
     strategy: Recreate
     replicas: 2

@@ -49,6 +49,12 @@ redis:
 
 backend:
   name: roommate-backend
+  env:
+    dbHost: host.k3d.internal
+    dbPort: "5432"
+    dbName: roommate
+    dbUser: roommate
+    dbPassword: roommate
   deployment:
     strategy: Recreate
     replicas: 2
