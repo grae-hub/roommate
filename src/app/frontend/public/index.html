@@ -9,18 +9,91 @@
 <body>
     <h1>grae is so hot</h1>
 
-    <form id="create-user-form">
-        <label>
-            Email
-            <input type="email" id="user-email" required>
-        </label>
-        <label>
-            Name
-            <input type="text" id="user-name" required>
-        </label>
-        <button type="submit">Create user</button>
-    </form>
-    <p id="form-status"></p>
+    <section>
+        <h2>Users</h2>
+
+        <form id="create-user-form" class="action-form">
+            <h3>Create user</h3>
+            <label>Email <input type="email" name="user_email" id="create-user-email" required></label>
+            <label>Name <input type="text" name="user_name" id="create-user-name" required></label>
+            <label>First name <input type="text" name="user_first_name" id="create-user-first-name" required></label>
+            <label>Last name <input type="text" name="user_last_name" id="create-user-last-name" required></label>
+            <button type="submit">Create user</button>
+        </form>
+        <pre class="form-output" id="create-user-output" hidden></pre>
+
+        <form id="list-users-form" class="action-form">
+            <h3>List users</h3>
+            <button type="submit">List users</button>
+        </form>
+        <pre class="form-output" id="list-users-output" hidden></pre>
+
+        <form id="get-user-form" class="action-form">
+            <h3>Get user</h3>
+            <label>Email <input type="email" name="user_email" id="get-user-email" required></label>
+            <button type="submit">Get user</button>
+        </form>
+        <pre class="form-output" id="get-user-output" hidden></pre>
+
+        <form id="delete-user-form" class="action-form">
+            <h3>Delete user</h3>
+            <label>Email <input type="email" name="user_email" id="delete-user-email" required></label>
+            <button type="submit">Delete user</button>
+        </form>
+        <pre class="form-output" id="delete-user-output" hidden></pre>
+    </section>
+
+    <section>
+        <h2>Houses</h2>
+
+        <form id="create-house-form" class="action-form">
+            <h3>Create house</h3>
+            <label>Street address <input type="text" name="house_street_address" id="create-house-street" required></label>
+            <label>Suburb <input type="text" name="house_suburb" id="create-house-suburb" required></label>
+            <label>Postcode <input type="text" name="house_postcode" id="create-house-postcode" required></label>
+            <label>State <input type="text" name="house_state" id="create-house-state" required></label>
+            <label>Country <input type="text" name="house_country" id="create-house-country" required></label>
+            <label>Initial user email <input type="email" name="user_email" id="create-house-user-email" required></label>
+            <button type="submit">Create house</button>
+        </form>
+        <pre class="form-output" id="create-house-output" hidden></pre>
+
+        <form id="list-houses-form" class="action-form">
+            <h3>List houses</h3>
+            <button type="submit">List houses</button>
+        </form>
+        <pre class="form-output" id="list-houses-output" hidden></pre>
+
+        <form id="get-house-form" class="action-form">
+            <h3>Get house</h3>
+            <label>House ID <input type="number" name="house_id" id="get-house-id" required></label>
+            <button type="submit">Get house</button>
+        </form>
+        <pre class="form-output" id="get-house-output" hidden></pre>
+
+        <form id="delete-house-form" class="action-form">
+            <h3>Delete house</h3>
+            <label>House ID <input type="number" name="house_id" id="delete-house-id" required></label>
+            <button type="submit">Delete house</button>
+        </form>
+        <pre class="form-output" id="delete-house-output" hidden></pre>
+
+        <form id="add-house-user-form" class="action-form">
+            <h3>Add user to house</h3>
+            <label>House ID <input type="number" name="house_id" id="add-house-user-house-id" required></label>
+            <label>User email <input type="email" name="user_email" id="add-house-user-email" required></label>
+            <button type="submit">Add user</button>
+        </form>
+        <pre class="form-output" id="add-house-user-output" hidden></pre>
+
+        <form id="add-house-admin-form" class="action-form">
+            <h3>Add admin to house</h3>
+            <label>House ID <input type="number" name="house_id" id="add-house-admin-house-id" required></label>
+            <label>User email <input type="email" name="user_email" id="add-house-admin-email" required></label>
+            <button type="submit">Add admin</button>
+        </form>
+        <pre class="form-output" id="add-house-admin-output" hidden></pre>
+    </section>
 
     <script src="js/main.js"></script>
 </body>
