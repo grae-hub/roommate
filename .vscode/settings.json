@@ -1,0 +1,8 @@
+{
+    "aws.cloudformation.diagnostics.cfnLint.path": "/Users/grae/.local/bin/cfn-lint",
+    "aws.cloudformation.diagnostics.cfnLint.customization": {
+        "includeChecks": [
+            "I"
+        ]
+    }
+}

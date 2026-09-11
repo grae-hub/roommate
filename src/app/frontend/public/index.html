@@ -4,10 +4,198 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>facts</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
-    <h1>grae is so hot</h1>
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="text-center mb-5">grae is so hot</h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="h4 border-bottom pb-2 mb-4">Users</h2>
+
+                <form id="create-user-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Create user</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Email</label>
+                        <input type="email" name="user_email" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Name</label>
+                        <input type="text" name="user_name" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">First name</label>
+                        <input type="text" name="user_first_name" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Last name</label>
+                        <input type="text" name="user_last_name" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create user</button>
+                </form>
+                <pre class="form-output" id="create-user-output" hidden></pre>
+
+                <form id="list-users-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">List users</h3>
+                    <button type="submit" class="btn btn-primary">List users</button>
+                </form>
+                <pre class="form-output" id="list-users-output" hidden></pre>
+
+                <form id="get-user-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Get user</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Email</label>
+                        <input type="email" name="user_email" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Get user</button>
+                </form>
+                <pre class="form-output" id="get-user-output" hidden></pre>
+
+                <form id="delete-user-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Delete user</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Email</label>
+                        <input type="email" name="user_email" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Delete user</button>
+                </form>
+                <pre class="form-output" id="delete-user-output" hidden></pre>
+
+                <form id="get-user-houses-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Get user's houses</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Email</label>
+                        <input type="email" name="user_email" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Get houses</button>
+                </form>
+                <pre class="form-output" id="get-user-houses-output" hidden></pre>
+
+                <form id="get-user-administered-houses-form" class="action-form border rounded p-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Get user's administered houses</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Email</label>
+                        <input type="email" name="user_email" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Get administered houses</button>
+                </form>
+                <pre class="form-output" id="get-user-administered-houses-output" hidden></pre>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="h4 border-bottom pb-2 mb-4">Houses</h2>
+
+                <form id="create-house-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Create house</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Street address</label>
+                        <input type="text" name="house_street_address" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Suburb</label>
+                        <input type="text" name="house_suburb" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Postcode</label>
+                        <input type="text" name="house_postcode" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">State</label>
+                        <input type="text" name="house_state" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Country</label>
+                        <input type="text" name="house_country" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Initial user email</label>
+                        <input type="email" name="user_email" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create house</button>
+                </form>
+                <pre class="form-output" id="create-house-output" hidden></pre>
+
+                <form id="list-houses-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">List houses</h3>
+                    <button type="submit" class="btn btn-primary">List houses</button>
+                </form>
+                <pre class="form-output" id="list-houses-output" hidden></pre>
+
+                <form id="get-house-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Get house</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">House ID</label>
+                        <input type="number" name="house_id" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Get house</button>
+                </form>
+                <pre class="form-output" id="get-house-output" hidden></pre>
+
+                <form id="delete-house-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Delete house</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">House ID</label>
+                        <input type="number" name="house_id" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Delete house</button>
+                </form>
+                <pre class="form-output" id="delete-house-output" hidden></pre>
+
+                <form id="add-house-user-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Add user to house</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">House</label>
+                        <select name="house_id" class="form-select house-select" required></select>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">User</label>
+                        <select name="user_email" class="form-select user-select" required></select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add user</button>
+                </form>
+                <pre class="form-output" id="add-house-user-output" hidden></pre>
+
+                <form id="add-house-admin-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Add admin to house</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">House</label>
+                        <select name="house_id" class="form-select house-select" required></select>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">User</label>
+                        <select name="user_email" class="form-select user-select" required></select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add admin</button>
+                </form>
+                <pre class="form-output" id="add-house-admin-output" hidden></pre>
+
+                <form id="get-house-users-form" class="action-form border rounded p-3 mb-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Get house's users</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">House ID</label>
+                        <input type="number" name="house_id" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Get users</button>
+                </form>
+                <pre class="form-output" id="get-house-users-output" hidden></pre>
+
+                <form id="get-house-admins-form" class="action-form border rounded p-3 d-inline-flex flex-wrap gap-2 align-items-end justify-content-center">
+                    <h3 class="w-100 text-muted text-uppercase small fw-semibold mb-1">Get house's admins</h3>
+                    <div>
+                        <label class="form-label small text-muted mb-1">House ID</label>
+                        <input type="number" name="house_id" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Get admins</button>
+                </form>
+                <pre class="form-output" id="get-house-admins-output" hidden></pre>
+            </div>
+        </div>
+    </div>
+
     <script src="js/main.js"></script>
 </body>
 </html>
