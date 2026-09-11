@@ -1,43 +1,17 @@
-body {
-    font-family: system-ui, sans-serif;
-    text-align: center;
-    margin-top: 50px;
-}
-
-section {
-    max-width: 700px;
-    margin: 0 auto 30px;
-    text-align: left;
-}
-
-.action-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 10px 15px;
-    margin-bottom: 10px;
-}
-
-.action-form h3 {
-    flex-basis: 100%;
-    margin: 0;
-}
-
-.action-form label {
-    display: flex;
-    flex-direction: column;
-    font-size: 0.85em;
+.action-form .form-control,
+.action-form .form-select {
+    width: auto;
+    min-width: 160px;
 }
 
 .form-output {
     text-align: left;
-    background: #f4f4f4;
-    padding: 10px;
-    border-radius: 6px;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 12px 14px;
+    border-radius: 8px;
     white-space: pre-wrap;
     word-break: break-word;
-    margin: -5px 0 15px;
+    font-size: 0.85em;
+    margin: -4px 0 12px;
 }

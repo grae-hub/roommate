@@ -21,6 +21,7 @@ async function callApi(outputId, method, path, body) {
     }
 
     showOutput(outputId, `${method} ${path} -> ${response.status}\n${JSON.stringify(result, null, 2)}`);
+    return { response, result };
 }
 
 function formValues(form, fields) {
@@ -39,8 +40,33 @@ function onSubmit(formId, handler) {
     });
 }
 
-onSubmit('create-user-form', (form, outputId) => {
-    callApi(outputId, 'POST', '/api/users', formValues(form, ['user_email', 'user_name', 'user_first_name', 'user_last_name']));
+// keep the house/user pickers in the "add to house" forms in sync with what actually exists
+async function refreshDropdowns() {
+    const [usersResult, housesResult] = await Promise.all([
+        fetch('/api/users').then((r) => r.json()),
+        fetch('/api/houses').then((r) => r.json()),
+    ]);
+
+    document.querySelectorAll('select.user-select').forEach((select) => {
+        const previous = select.value;
+        select.innerHTML = usersResult.users
+            .map((user) => `<option value="${user.user_email}">${user.user_email}</option>`)
+            .join('');
+        if (previous) select.value = previous;
+    });
+
+    document.querySelectorAll('select.house-select').forEach((select) => {
+        const previous = select.value;
+        select.innerHTML = housesResult.houses
+            .map((house) => `<option value="${house.house_id}">#${house.house_id} - ${house.house_street_address}</option>`)
+            .join('');
+        if (previous) select.value = previous;
+    });
+}
+
+onSubmit('create-user-form', async (form, outputId) => {
+    await callApi(outputId, 'POST', '/api/users', formValues(form, ['user_email', 'user_name', 'user_first_name', 'user_last_name']));
+    refreshDropdowns();
 });
 
 onSubmit('list-users-form', (form, outputId) => {
@@ -52,16 +78,28 @@ onSubmit('get-user-form', (form, outputId) => {
     callApi(outputId, 'GET', `/api/users/${encodeURIComponent(user_email)}`);
 });
 
-onSubmit('delete-user-form', (form, outputId) => {
+onSubmit('delete-user-form', async (form, outputId) => {
     const { user_email } = formValues(form, ['user_email']);
-    callApi(outputId, 'DELETE', `/api/users/${encodeURIComponent(user_email)}`);
+    await callApi(outputId, 'DELETE', `/api/users/${encodeURIComponent(user_email)}`);
+    refreshDropdowns();
 });
 
-onSubmit('create-house-form', (form, outputId) => {
-    callApi(outputId, 'POST', '/api/houses', formValues(form, [
+onSubmit('get-user-houses-form', (form, outputId) => {
+    const { user_email } = formValues(form, ['user_email']);
+    callApi(outputId, 'GET', `/api/users/${encodeURIComponent(user_email)}/houses`);
+});
+
+onSubmit('get-user-administered-houses-form', (form, outputId) => {
+    const { user_email } = formValues(form, ['user_email']);
+    callApi(outputId, 'GET', `/api/users/${encodeURIComponent(user_email)}/administered-houses`);
+});
+
+onSubmit('create-house-form', async (form, outputId) => {
+    await callApi(outputId, 'POST', '/api/houses', formValues(form, [
         'house_street_address', 'house_suburb', 'house_postcode',
         'house_state', 'house_country', 'user_email',
     ]));
+    refreshDropdowns();
 });
 
 onSubmit('list-houses-form', (form, outputId) => {
@@ -73,9 +111,10 @@ onSubmit('get-house-form', (form, outputId) => {
     callApi(outputId, 'GET', `/api/houses/${encodeURIComponent(house_id)}`);
 });
 
-onSubmit('delete-house-form', (form, outputId) => {
+onSubmit('delete-house-form', async (form, outputId) => {
     const { house_id } = formValues(form, ['house_id']);
-    callApi(outputId, 'DELETE', `/api/houses/${encodeURIComponent(house_id)}`);
+    await callApi(outputId, 'DELETE', `/api/houses/${encodeURIComponent(house_id)}`);
+    refreshDropdowns();
 });
 
 onSubmit('add-house-user-form', (form, outputId) => {
@@ -87,3 +126,15 @@ onSubmit('add-house-admin-form', (form, outputId) => {
     const { house_id, user_email } = formValues(form, ['house_id', 'user_email']);
     callApi(outputId, 'POST', `/api/houses/${encodeURIComponent(house_id)}/admins`, { user_email });
 });
+
+onSubmit('get-house-users-form', (form, outputId) => {
+    const { house_id } = formValues(form, ['house_id']);
+    callApi(outputId, 'GET', `/api/houses/${encodeURIComponent(house_id)}/users`);
+});
+
+onSubmit('get-house-admins-form', (form, outputId) => {
+    const { house_id } = formValues(form, ['house_id']);
+    callApi(outputId, 'GET', `/api/houses/${encodeURIComponent(house_id)}/admins`);
+});
+
+refreshDropdowns();
