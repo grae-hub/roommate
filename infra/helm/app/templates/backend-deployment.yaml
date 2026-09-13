@@ -17,6 +17,7 @@ spec:
             labels:
                 app: {{ .Values.backend.name }}
         spec:
+            serviceAccountName: {{ .Values.backend.name }}
             containers:
                 - name: {{ .Values.backend.deployment.containerName }}
                   image: {{ .Values.backend.deployment.containerImage }}
@@ -33,6 +34,10 @@ spec:
                       value: "{{ .Values.backend.env.dbUser }}"
                     - name: DB_PASSWORD
                       value: "{{ .Values.backend.env.dbPassword }}"
+                    - name: DB_IAM_AUTH
+                      value: "{{ .Values.backend.env.dbIamAuth }}"
+                    - name: AWS_REGION
+                      value: "{{ .Values.backend.env.awsRegion }}"
                   resources:
                     requests:
                         cpu: {{ .Values.backend.deployment.cpuMin }}

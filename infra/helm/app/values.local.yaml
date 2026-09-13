@@ -49,12 +49,16 @@ redis:
 
 backend:
   name: roommate-backend
+  serviceAccount:
+    roleArn: ""
   env:
     dbHost: host.docker.internal
     dbPort: "5432"
     dbName: roommate
     dbUser: roommate
     dbPassword: roommate
+    dbIamAuth: "false"
+    awsRegion: ""
   deployment:
     strategy: Recreate
     replicas: 2

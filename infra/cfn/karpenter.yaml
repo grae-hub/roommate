@@ -514,3 +514,7 @@ Outputs:
     Value: !GetAtt KarpenterNodeRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-KarpenterNodeRoleArn"
+  KarpenterNodeSecurityGroupId:
+    Value: !Ref KarpenterNodeSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-KarpenterNodeSecurityGroupId"

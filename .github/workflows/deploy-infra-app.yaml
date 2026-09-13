@@ -22,6 +22,21 @@ on:
       user_pool_domain_prefix:
         required: true
         type: string
+      db_endpoint_address:
+        required: true
+        type: string
+      db_port:
+        required: true
+        type: string
+      db_name:
+        required: true
+        type: string
+      db_iam_username:
+        required: true
+        type: string
+      db_access_role_arn:
+        required: true
+        type: string
 
 permissions:
   id-token: write
@@ -66,6 +81,11 @@ jobs:
             --set frontend.ingress.cognito.userPoolArn=${{ inputs.user_pool_arn }} \
             --set frontend.ingress.cognito.userPoolClientId=${{ inputs.user_pool_client_id }} \
             --set frontend.ingress.cognito.userPoolDomainPrefix=${{ inputs.user_pool_domain_prefix }} \
+            --set backend.env.dbHost=${{ inputs.db_endpoint_address }} \
+            --set backend.env.dbPort=${{ inputs.db_port }} \
+            --set backend.env.dbName=${{ inputs.db_name }} \
+            --set backend.env.dbUser=${{ inputs.db_iam_username }} \
+            --set backend.serviceAccount.roleArn=${{ inputs.db_access_role_arn }} \
   
       - name: get ingress alb hostname
         run: |

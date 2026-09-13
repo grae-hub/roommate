@@ -75,9 +75,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+DB_IAM_AUTH = os.environ.get('DB_IAM_AUTH', 'false').lower() == 'true'
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'config.db_backends.iam_postgres' if DB_IAM_AUTH else 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'roommate'),
         'USER': os.environ.get('DB_USER', 'roommate'),
         'PASSWORD': os.environ.get('DB_PASSWORD', 'roommate'),

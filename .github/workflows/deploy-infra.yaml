@@ -10,6 +10,9 @@ on:
       - "infra/cfn/networking.yaml"
       - "infra/cfn/eks.yaml"
       - "infra/cfn/karpenter.yaml"
+      - "infra/cfn/rds.yaml"
+      - "infra/cfn/lambda-artifacts.yaml"
+      - "infra/lambda/rds_bootstrap/**"
       - ".github/workflows/deploy-infra.yaml"
   workflow_dispatch:
 
@@ -74,3 +77,8 @@ jobs:
       user_pool_arn: ${{ needs.deploy-infra-cfn.outputs.user_pool_arn }}
       user_pool_client_id: ${{ needs.deploy-infra-cfn.outputs.user_pool_client_id }}
       user_pool_domain_prefix: ${{ needs.deploy-infra-cfn.outputs.user_pool_domain_prefix }}
+      db_endpoint_address: ${{ needs.deploy-infra-cfn.outputs.db_endpoint_address }}
+      db_port: ${{ needs.deploy-infra-cfn.outputs.db_port }}
+      db_name: ${{ needs.deploy-infra-cfn.outputs.db_name }}
+      db_iam_username: ${{ needs.deploy-infra-cfn.outputs.db_iam_username }}
+      db_access_role_arn: ${{ needs.deploy-infra-cfn.outputs.db_access_role_arn }}
