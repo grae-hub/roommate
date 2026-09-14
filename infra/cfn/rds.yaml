@@ -1,0 +1,250 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: rds postgres database, iam authentication only
+
+Parameters:
+  App:
+    Type: String
+    Default: roommate
+
+  Env:
+    Type: String
+    AllowedValues:
+      - prod
+      - dev
+    Default: dev
+
+  NetworkStackName:
+    Type: String
+    Description: name of the network stack
+
+  EksStackName:
+    Type: String
+    Description: name of the eks stack
+
+  KarpenterStackName:
+    Type: String
+    Description: name of the karpenter stack
+
+  DbInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+
+  DbAllocatedStorage:
+    Type: Number
+    Default: 20
+
+  DbName:
+    Type: String
+    Default: roommate
+
+  DbIamUsername:
+    Type: String
+    Default: roommate_app
+    Description: db user the backend connects as via iam auth (created by DbBootstrapFunction)
+
+  DbEngineVersion:
+    Type: String
+    Default: "16.4"
+
+  LambdaArtifactsBucket:
+    Type: String
+    Description: s3 bucket holding the rds bootstrap lambda's deployment package
+
+  LambdaCodeS3Key:
+    Type: String
+    Description: s3 key of the rds bootstrap lambda's deployment package zip
+
+Conditions:
+  IsProd: !Equals [!Ref Env, "prod"]
+
+Resources:
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "security group for rds instance"
+      VpcId:
+        Fn::ImportValue: !Sub "${NetworkStackName}-VpcId"
+      Tags:
+        - Key: Name
+          Value: !Sub "${App}-db-sg-${Env}"
+
+  DbIngressFromKarpenterNodes:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DbSecurityGroup
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub "${KarpenterStackName}-KarpenterNodeSecurityGroupId"
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+
+  DbIngressFromManagedNodeGroup:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DbSecurityGroup
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub "${EksStackName}-ClusterSecurityGroupId"
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub "private subnets for ${App} rds instance (${Env})"
+      SubnetIds:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
+
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "security group for rds bootstrap lambda"
+      VpcId:
+        Fn::ImportValue: !Sub "${NetworkStackName}-VpcId"
+      Tags:
+        - Key: Name
+          Value: !Sub "${App}-db-bootstrap-lambda-sg-${Env}"
+
+  DbIngressFromLambda:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DbSecurityGroup
+      SourceSecurityGroupId: !Ref LambdaSecurityGroup
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+
+  DbInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub "${App}-db-${Env}"
+      Engine: postgres
+      EngineVersion: !Ref DbEngineVersion
+      DBInstanceClass: !Ref DbInstanceClass
+      AllocatedStorage: !Ref DbAllocatedStorage
+      StorageType: gp3
+      StorageEncrypted: true
+      DBName: !Ref DbName
+      MasterUsername: postgres
+      ManageMasterUserPassword: true
+      MultiAZ: !If [IsProd, true, false]
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DbSecurityGroup
+      PubliclyAccessible: false
+      EnableIAMDatabaseAuthentication: true
+
+  DbAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${App}-db-access-policy-${Env}"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: rds-db:connect
+            Resource: !Sub "arn:${AWS::Partition}:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DbInstance.DbiResourceId}/${DbIamUsername}"
+
+  DbAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${App}-db-access-role-${Env}"
+      AssumeRolePolicyDocument:
+        Fn::Sub:
+          - |
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": { "Federated": "${ClusterOidcProviderArn}" },
+                  "Action": "sts:AssumeRoleWithWebIdentity",
+                  "Condition": {
+                    "StringEquals": {
+                      "${ClusterOidcProviderUrl}:aud": "sts.amazonaws.com",
+                      "${ClusterOidcProviderUrl}:sub": "system:serviceaccount:default:${App}-backend"
+                    }
+                  }
+                }
+              ]
+            }
+          - ClusterOidcProviderArn:
+              Fn::ImportValue: !Sub "${EksStackName}-ClusterOidcProviderArn"
+            ClusterOidcProviderUrl:
+              Fn::ImportValue: !Sub "${EksStackName}-ClusterOidcProviderUrl"
+      ManagedPolicyArns:
+        - !Ref DbAccessPolicy
+
+  DbBootstrapExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${App}-db-bootstrap-role-${Env}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: !Sub "${App}-db-bootstrap-secret-access-${Env}"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !GetAtt DbInstance.MasterUserSecret.SecretArn
+
+  DbBootstrapFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${App}-db-bootstrap-${Env}"
+      Runtime: python3.12
+      Handler: handler.handler
+      Timeout: 60
+      Role: !GetAtt DbBootstrapExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaArtifactsBucket
+        S3Key: !Ref LambdaCodeS3Key
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
+          - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet2Id"
+
+  DbBootstrapUser:
+    Type: Custom::DbUser
+    DependsOn: DbIngressFromLambda
+    Properties:
+      ServiceToken: !GetAtt DbBootstrapFunction.Arn
+      SecretArn: !GetAtt DbInstance.MasterUserSecret.SecretArn
+      DbHost: !GetAtt DbInstance.Endpoint.Address
+      DbPort: !GetAtt DbInstance.Endpoint.Port
+      DbName: !Ref DbName
+      IamUsername: !Ref DbIamUsername
+
+Outputs:
+  DbEndpointAddress:
+    Value: !GetAtt DbInstance.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-DbEndpointAddress"
+  DbPort:
+    Value: !GetAtt DbInstance.Endpoint.Port
+    Export:
+      Name: !Sub "${AWS::StackName}-DbPort"
+  DbName:
+    Value: !Ref DbName
+    Export:
+      Name: !Sub "${AWS::StackName}-DbName"
+  DbIamUsername:
+    Value: !Ref DbIamUsername
+    Export:
+      Name: !Sub "${AWS::StackName}-DbIamUsername"
+  DbAccessRoleArn:
+    Value: !GetAtt DbAccessRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-DbAccessRoleArn"

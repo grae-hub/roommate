@@ -89,7 +89,7 @@ Resources:
           - !GetAtt Vpc.CidrBlock
           - 4
           - !Ref SubnetCidrBits
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
           Value: !Sub "${App}-subnet-public-1-${Env}"
@@ -109,7 +109,7 @@ Resources:
           - !GetAtt Vpc.CidrBlock
           - 4
           - !Ref SubnetCidrBits
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
           Value: !Sub "${App}-subnet-public-2-${Env}"
