@@ -8,6 +8,7 @@ on:
     paths:
       - "infra/cfn/cognito.yaml"
       - "infra/cfn/networking.yaml"
+      - "infra/cfn/certificate.yaml"
       - "infra/cfn/eks.yaml"
       - "infra/cfn/karpenter.yaml"
       - "infra/cfn/rds.yaml"
@@ -58,7 +59,7 @@ jobs:
       node_role_name: ${{ needs.deploy-infra-cfn.outputs.node_role_name }}
 
   deploy-infra-lb-controller:
-    needs: [set-env, deploy-infra-cfn, deploy-infra-karpenter]
+    needs: [set-env, deploy-infra-cfn]
     uses: ./.github/workflows/deploy-infra-lb-controller.yaml
     secrets: inherit
     with:
@@ -67,7 +68,7 @@ jobs:
       vpc_id: ${{ needs.deploy-infra-cfn.outputs.vpc_id }}
 
   deploy-infra-app:
-    needs: [set-env, build-image, deploy-infra-cfn, deploy-infra-lb-controller]
+    needs: [set-env, build-image, deploy-infra-cfn, deploy-infra-karpenter, deploy-infra-lb-controller]
     uses: ./.github/workflows/deploy-infra-app.yaml
     secrets: inherit
     with:

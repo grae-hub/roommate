@@ -27,6 +27,7 @@ jobs:
             roommate-cognito-${{ vars.ENV_SHORTHAND }}
             roommate-karpenter-${{ vars.ENV_SHORTHAND }}
             roommate-eks-${{ vars.ENV_SHORTHAND }}
+            roommate-certificate-${{ vars.ENV_SHORTHAND }}
             roommate-networking-${{ vars.ENV_SHORTHAND }}
         KARPENTER_ROLE_NAME: KarpenterNodeRole-roommate-eks-cluster-${{ vars.ENV_SHORTHAND }}
         CLUSTER_NAME: roommate-eks-cluster-${{ vars.ENV_SHORTHAND }}

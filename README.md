@@ -29,6 +29,12 @@ CloudFormation stacks that deploy our AWS platform.
 
 <br>
 
+#### `certificate.yaml`
+
+- **ACM Certificate:** Requested and DNS-validated upfront so that it's ready for when Ingress needs it later on in deployment. Lives in its own stack so its (slow) validation and lifecycle are independent of the cluster
+
+<br>
+
 #### `eks.yaml`
 
 - **EksClusterRole:** Lets the EKS control plane call other AWS APIs on your behalf
@@ -36,7 +42,6 @@ CloudFormation stacks that deploy our AWS platform.
 - **EKS Cluster:** The AWS managed control plane that runs and coordinates the cluster, targets all subnets in our VPC
 - **Managed Node Group:** ASG of EC2 nodes that run the pods, placed in the private subnets
 - **OIDC Provider:** Enables IRSA, so a pod's service account can assume its own specific IAM role instead of inheriting the whole node's shared role
-- **ACM Certificate:** Requested and DNS-validated upfront so that it's ready for when Ingress needs it later on in deployment
 
 <details>
 <summary><b>Diagram</b></summary>
@@ -113,3 +118,11 @@ For our frontend Ingress to function here we first need to deploy the **Load Bal
 <img src="diagrams/app.png" width="640" alt="app helm">
 
 </details>
+
+---
+
+## /.github/workflows
+
+GitHub Actions pipeline that deploys everything above. Triggers on any push to 'develop' or 'main' branches.
+
+![actions pipeline](diagrams/actions-pipeline.png)

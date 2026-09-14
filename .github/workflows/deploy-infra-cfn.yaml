@@ -47,7 +47,7 @@ jobs:
     outputs:
       vpc_id: ${{ steps.networking.outputs.vpc_id }}
       cluster_name: ${{ steps.eks.outputs.cluster_name }}
-      certificate_arn: ${{ steps.eks.outputs.certificate_arn }}
+      certificate_arn: ${{ steps.certificate.outputs.certificate_arn }}
       controller_role_arn: ${{ steps.karpenter.outputs.controller_role_arn }}
       node_role: ${{ steps.karpenter.outputs.node_role }}
       node_role_name: ${{ steps.karpenter.outputs.node_role_name }}
@@ -64,6 +64,7 @@ jobs:
     env:
       AWS_REGION: ap-southeast-2
       NETWORKING_STACK_NAME: roommate-networking-${{ vars.ENV_SHORTHAND }}
+      CERTIFICATE_STACK_NAME: roommate-certificate-${{ vars.ENV_SHORTHAND }}
       EKS_STACK_NAME: roommate-eks-${{ vars.ENV_SHORTHAND }}
       KARPENTER_STACK_NAME: roommate-karpenter-${{ vars.ENV_SHORTHAND }}
       COGNITO_STACK_NAME: roommate-cognito-${{ vars.ENV_SHORTHAND }}
@@ -100,6 +101,27 @@ jobs:
           echo "vpc id: '$VPC_ID'"
           echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
 
+      - name: deploy certificate cfn
+        id: certificate
+        run: |
+          aws cloudformation deploy \
+            --stack-name "${CERTIFICATE_STACK_NAME}" \
+            --template-file infra/cfn/certificate.yaml \
+            --region "${AWS_REGION}" \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+            Env="${{ vars.ENV_SHORTHAND }}" \
+            DomainName="${{ vars.DOMAIN_NAME }}" \
+            HostedZoneId="${{ secrets.HOSTED_ZONE_ID }}"
+
+          echo "getting ingress certificate arn..."
+          CERTIFICATE_ARN=$(aws cloudformation describe-stacks \
+          --stack-name ${CERTIFICATE_STACK_NAME} \
+          --query "Stacks[0].Outputs[?OutputKey=='CertificateArn'].OutputValue" \
+          --output text)
+          echo "certificate arn: '$CERTIFICATE_ARN'"
+          echo "certificate_arn=$CERTIFICATE_ARN" >> $GITHUB_OUTPUT
+
       - name: deploy eks cfn
         id: eks
         run: |
@@ -115,17 +137,7 @@ jobs:
             NodeInstanceType="${{ vars.NODE_INSTANCE_TYPE }}" \
             NodeDesiredSize="${{ vars.NODE_DESIRED_SIZE }}" \
             NodeMinSize="${{ vars.NODE_MIN_SIZE }}" \
-            NodeMaxSize="${{ vars.NODE_MAX_SIZE }}" \
-            DomainName="${{ vars.DOMAIN_NAME }}" \
-            HostedZoneId="${{ secrets.HOSTED_ZONE_ID }}"
-
-          echo "getting ingress certificate arn..."
-          CERTIFICATE_ARN=$(aws cloudformation describe-stacks \
-          --stack-name ${EKS_STACK_NAME} \
-          --query "Stacks[0].Outputs[?OutputKey=='CertificateArn'].OutputValue" \
-          --output text)
-          echo "certificate arn: '$CERTIFICATE_ARN'"
-          echo "certificate_arn=$CERTIFICATE_ARN" >> $GITHUB_OUTPUT
+            NodeMaxSize="${{ vars.NODE_MAX_SIZE }}"
 
           echo "getting cluster name..."
           CLUSTER_NAME=$(aws cloudformation describe-stacks \

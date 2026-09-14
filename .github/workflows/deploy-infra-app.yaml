@@ -89,7 +89,7 @@ jobs:
   
       - name: get ingress alb hostname
         run: |
-          INGRESS_NAME=${{ env.APP_NAME }}-ingress
+          INGRESS_NAME=${{ env.APP_NAME }}-frontend-ingress
   
           # wait for alb to be provisioned (up to 5 minutes)
           for i in {1..30}; do
