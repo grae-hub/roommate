@@ -1,2 +1,3 @@
 .local/**/.secrets.*
+.local/github_actions*
 .vscode/*
