@@ -42,10 +42,6 @@ Parameters:
     Default: roommate_app
     Description: db user the backend connects as via iam auth (created by DbBootstrapFunction)
 
-  DbEngineVersion:
-    Type: String
-    Default: "16.4"
-
   LambdaArtifactsBucket:
     Type: String
     Description: s3 bucket holding the rds bootstrap lambda's deployment package
@@ -120,7 +116,6 @@ Resources:
     Properties:
       DBInstanceIdentifier: !Sub "${App}-db-${Env}"
       Engine: postgres
-      EngineVersion: !Ref DbEngineVersion
       DBInstanceClass: !Ref DbInstanceClass
       AllocatedStorage: !Ref DbAllocatedStorage
       StorageType: gp3
