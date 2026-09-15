@@ -77,6 +77,8 @@ Resources:
       Name: !Sub "${App}-eks-cluster-${Env}"
       Version: !Ref KubernetesVersion
       RoleArn: !GetAtt EksClusterRole.Arn
+      AccessConfig:
+        AuthenticationMode: API_AND_CONFIG_MAP
       ResourcesVpcConfig:
         SubnetIds:
           - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet1Id"
