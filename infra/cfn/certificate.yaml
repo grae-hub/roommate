@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: acm certificate for the app ingress, dns-validated
+
+Parameters:
+  App:
+    Type: String
+    Default: roommate
+
+  Env:
+    Type: String
+    AllowedValues:
+      - prod
+      - dev
+    Default: dev
+
+  DomainName:
+    Type: String
+    Default: roommatesync.click
+
+  HostedZoneId:
+    Type: String
+    Default: Z09980193F7B1SUQ16X0C
+
+Resources:
+  IngressCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+      Tags:
+        - Key: Name
+          Value: !Sub "${App}-ingress-cert-${Env}"
+
+Outputs:
+  CertificateArn:
+    Value: !Ref IngressCertificate
+    Export:
+      Name: !Sub "${AWS::StackName}-CertificateArn"
