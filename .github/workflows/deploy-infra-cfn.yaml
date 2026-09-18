@@ -146,7 +146,21 @@ jobs:
           --output text)
           echo "cluster name: '$CLUSTER_NAME'"
           echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
-      
+      - name: install eksctl
+        run: |
+          curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+          tar -xzf eksctl_Linux_amd64.tar.gz
+          sudo mv eksctl /usr/local/bin
+
+      - name: grant admin user access to eks cluster
+        run: |
+          eksctl create iamidentitymapping \
+            --cluster "${{ steps.eks.outputs.cluster_name }}" \
+            --arn "arn:aws:iam::876524020376:user/admin" \
+            --username "admin" \
+            --group "system:masters" \
+            --region "${AWS_REGION}"
+
       - name: deploy karpenter cfn
         id: karpenter
         run: |
