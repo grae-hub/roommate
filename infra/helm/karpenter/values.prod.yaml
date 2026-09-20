@@ -4,6 +4,7 @@ nodeRole: ""
 nodeClass:
   name: default
   amiAlias: al2023@latest
+  maxPods: 6
 
 nodePool:
   name: default
