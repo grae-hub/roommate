@@ -4,8 +4,6 @@ metadata:
   name: {{ .Values.nodeClass.name }}
 spec:
   role: {{ .Values.nodeRole }}
-  kubelet:
-    maxPods: {{ .Values.nodeClass.maxPods }}
   amiSelectorTerms:
     - alias: {{ .Values.nodeClass.amiAlias }}
   subnetSelectorTerms:
