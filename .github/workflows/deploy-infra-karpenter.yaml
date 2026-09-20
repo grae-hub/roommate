@@ -60,7 +60,7 @@ jobs:
             --version "1.0.0" \
             --namespace karpenter \
             --create-namespace \
-            --timeout 10m0s \
+            --no-hooks \
             --set "settings.clusterName=${{ inputs.cluster_name }}" \
             --set "settings.interruptionQueue=${{ inputs.cluster_name }}" \
             --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=${{ inputs.controller_role_arn }} \
