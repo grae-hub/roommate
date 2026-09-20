@@ -28,7 +28,7 @@ frontend:
         pathType: Prefix
         backend:
           service:
-            name: roommate-service
+            name: roommate-frontend-service
             port:
               number: 80
     certificateArn: ""
