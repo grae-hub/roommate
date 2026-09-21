@@ -221,6 +221,7 @@ Resources:
       DbPort: !GetAtt DbInstance.Endpoint.Port
       DbName: !Ref DbName
       IamUsername: !Ref DbIamUsername
+      LambdaCodeS3Key: !Ref LambdaCodeS3Key
 
 Outputs:
   DbEndpointAddress:
