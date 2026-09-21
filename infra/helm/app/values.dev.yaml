@@ -73,6 +73,8 @@ backend:
     dbPassword: ""
     dbIamAuth: "true"
     awsRegion: "ap-southeast-2"
+  migrate:
+    enabled: true
   deployment:
     strategy: Recreate
     replicas: 2

@@ -59,6 +59,8 @@ backend:
     dbPassword: roommate
     dbIamAuth: "false"
     awsRegion: ""
+  migrate:
+    enabled: false
   deployment:
     strategy: Recreate
     replicas: 2
