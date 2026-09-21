@@ -52,6 +52,7 @@ def create_iam_user(props):
         if not exists:
             connection.run(f'CREATE USER "{iam_username}"')
         connection.run(f'GRANT rds_iam TO "{iam_username}"')
+        connection.run(f'GRANT USAGE, CREATE ON SCHEMA public TO "{iam_username}"')
     finally:
         connection.close()
 
