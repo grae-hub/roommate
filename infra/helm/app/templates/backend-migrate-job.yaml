@@ -1,0 +1,45 @@
+{{- if .Values.backend.migrate.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: {{ .Values.backend.name }}-migrate
+    annotations:
+        helm.sh/hook: post-install,post-upgrade
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+    backoffLimit: 3
+    template:
+        metadata:
+            name: {{ .Values.backend.name }}-migrate-pod
+        spec:
+            restartPolicy: Never
+            serviceAccountName: {{ .Values.backend.name }}
+            containers:
+                - name: migrate
+                  image: {{ .Values.backend.deployment.containerImage }}
+                  command: ["python", "manage.py", "migrate", "--noinput"]
+                  env:
+                    - name: DB_HOST
+                      value: "{{ .Values.backend.env.dbHost }}"
+                    - name: DB_PORT
+                      value: "{{ .Values.backend.env.dbPort }}"
+                    - name: DB_NAME
+                      value: "{{ .Values.backend.env.dbName }}"
+                    - name: DB_USER
+                      value: "{{ .Values.backend.env.dbUser }}"
+                    - name: DB_PASSWORD
+                      value: "{{ .Values.backend.env.dbPassword }}"
+                    - name: DB_IAM_AUTH
+                      value: "{{ .Values.backend.env.dbIamAuth }}"
+                    - name: AWS_REGION
+                      value: "{{ .Values.backend.env.awsRegion }}"
+                  resources:
+                    requests:
+                        cpu: {{ .Values.backend.deployment.cpuMin }}
+                        memory: {{ .Values.backend.deployment.memMin }}
+                        ephemeral-storage: {{ .Values.backend.deployment.storageMin }}
+                    limits:
+                        cpu: {{ .Values.backend.deployment.cpuMax }}
+                        memory: {{ .Values.backend.deployment.memMax }}
+                        ephemeral-storage: {{ .Values.backend.deployment.storageMax }}
+{{- end }}
