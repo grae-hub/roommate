@@ -1,17 +1,231 @@
-.action-form .form-control,
-.action-form .form-select {
-    width: auto;
-    min-width: 160px;
+:root {
+    --bg: #f6f4fb;
+    --ink: #1e1a2e;
+    --muted: #6f6a85;
+    --accent: #7c5cd6;
+    --line: #d9d3ea;
+    --tint: #ebe5fa;
+    --error: #b3261e;
+    --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-.form-output {
-    text-align: left;
-    background: #0f172a;
-    color: #e2e8f0;
-    padding: 12px 14px;
-    border-radius: 8px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-size: 0.85em;
-    margin: -4px 0 12px;
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+}
+
+.screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: max(28px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom));
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+}
+
+.brand svg { width: 28px; height: 28px; color: var(--accent); }
+
+/* views sit at the bottom on a phone, like a lock screen */
+.view { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+.view[hidden] { display: none; }
+.view-loading { align-items: center; justify-content: center; }
+
+h1 {
+    margin: 0 0 28px;
+    font-weight: 800;
+    font-size: clamp(3rem, 15vw, 4.2rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    overflow-wrap: anywhere;
+}
+
+h1 em { font-style: normal; color: var(--accent); }
+
+#welcome em { display: inline-block; font-size: 0.7em; }
+
+.sub { margin: 0; color: var(--muted); line-height: 1.5; }
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+input {
+    width: 100%;
+    padding: 14px 0;
+    font: inherit;
+    font-size: 1.15rem; /* 16px or more stops iOS zooming into the field */
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid var(--accent);
+    border-radius: 0;
+}
+
+input::placeholder { color: #aaa4c0; }
+input:focus { outline: none; border-bottom-color: var(--ink); }
+
+.error { min-height: 1.4em; margin: 8px 0 12px; font-size: 0.9rem; color: var(--error); }
+
+button {
+    width: 100%;
+    padding: 16px 18px;
+    font: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: var(--ink);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.15s;
+}
+
+button:hover { opacity: 0.9; }
+button:active { transform: translateY(1px); }
+button:disabled { opacity: 0.5; cursor: default; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+.avatar {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 22px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 1.7rem;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--accent);
+    border-radius: 50%;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner { animation-duration: 2.4s; }
+    button { transition: none; }
+}
+
+/* houses */
+.houses { margin-top: 36px; }
+
+.houses h2 {
+    margin: 0 0 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.tiles {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+}
+
+.tile {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px;
+    min-width: 0;
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: 18px;
+    overflow-wrap: anywhere;
+}
+
+/* shown instead of tiles when the user isn't in any houses */
+#houses-message {
+    padding: 22px;
+    border: 2px dashed var(--line);
+    border-radius: 18px;
+    line-height: 1.5;
+}
+
+.tile-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.tile .badge {
+    flex: none;
+    padding: 6px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--tint);
+    border-radius: 999px;
+}
+
+.tile strong { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
+.tile span { color: var(--muted); font-size: 0.9rem; }
+
+/* desktop: headline on the left, form on the right */
+@media (min-width: 800px) {
+    .screen { padding: 40px 64px 56px; }
+    .brand { font-size: 1.3rem; }
+    .brand svg { width: 34px; height: 34px; }
+
+    #username-view {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        align-items: end;
+        gap: 96px;
+    }
+    #username-view[hidden] { display: none; }
+    #username-view h1 { margin: 0; }
+    #username-form { padding-bottom: 8px; max-width: 460px; }
+
+    h1 { font-size: clamp(4.5rem, 9vw, 8rem); }
+    .view-welcome h1 { font-size: clamp(4rem, 8vw, 7rem); }
+    .avatar { width: 80px; height: 80px; font-size: 2.1rem; }
+    .sub { font-size: 1.15rem; margin-top: 20px; }
+
+    .view-welcome {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        align-items: end;
+        gap: 96px;
+    }
+    .view-welcome[hidden] { display: none; }
+    .houses { margin-top: 0; padding-bottom: 8px; }
+    .houses .sub { margin-top: 0; font-size: 1rem; }
+    input { font-size: 1.4rem; }
 }

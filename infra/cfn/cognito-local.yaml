@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: local cognito deployment
+Parameters:
+  App:
+    Type: String
+    Default: roommate
+
+  GoogleClientId:
+    Type: String
+    NoEcho: true
+
+  GoogleClientSecret:
+    Type: String
+    NoEcho: true
+
+  LocalAppUrl:
+    Type: String
+    Default: http://localhost:3000
+    Description: origin the local app runs on
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${App}-users-local"
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub "${App}-auth-local"
+      UserPoolId: !Ref UserPool
+
+  GoogleIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref UserPool
+      ProviderName: Google
+      ProviderType: Google
+      ProviderDetails:
+        client_id: !Ref GoogleClientId
+        client_secret: !Ref GoogleClientSecret
+        authorize_scopes: openid email profile
+      AttributeMapping:
+        email: email
+        name: name
+        picture: picture
+
+  LocalUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: GoogleIdentityProvider
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: !Sub "${App}-local-client"
+      GenerateSecret: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+      CallbackURLs:
+        - !Sub "${LocalAppUrl}/callback"
+      LogoutURLs:
+        - !Sub "${LocalAppUrl}/logout"
+      SupportedIdentityProviders:
+        - COGNITO
+        - Google
+
+Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+
+  UserPoolDomainUrl:
+    Value: !Sub "https://${App}-auth-local.auth.${AWS::Region}.amazoncognito.com"
+
+  LocalUserPoolClientId:
+    Value: !Ref LocalUserPoolClient

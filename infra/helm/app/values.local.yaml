@@ -2,6 +2,7 @@ env: "local"
 
 frontend:
   name: roommate-frontend
+  localAuthConfig: true
   deployment:
     strategy: Recreate
     replicas: 2

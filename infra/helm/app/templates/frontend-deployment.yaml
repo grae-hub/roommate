@@ -31,3 +31,14 @@ spec:
                         cpu: {{ .Values.frontend.deployment.cpuMax }}
                         memory: {{ .Values.frontend.deployment.memMax }}
                         ephemeral-storage: {{ .Values.frontend.deployment.storageMax }}
+{{- if .Values.frontend.localAuthConfig }}
+                  volumeMounts:
+                    - name: local-auth-config
+                      mountPath: /usr/share/nginx/html/local-config.json
+                      subPath: local-config.json
+            volumes:
+                - name: local-auth-config
+                  configMap:
+                      name: {{ .Values.frontend.name }}-local-auth
+                      optional: true
+{{- end }}

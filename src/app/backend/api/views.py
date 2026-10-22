@@ -1,3 +1,4 @@
+import base64
 import json
 
 from django.db import IntegrityError
@@ -12,8 +13,6 @@ from .models import House, User
 USER_REQUIRED_FIELDS = [
     'user_email',
     'user_name',
-    'user_first_name',
-    'user_last_name'
 ]
 HOUSE_REQUIRED_FIELDS = [
     'house_street_address',
@@ -29,15 +28,30 @@ def missing_fields(data, required):
     return [field for field in required if not data.get(field)]
 
 
+def decode_alb_oidc_data(header_value):
+    payload_b64 = header_value.split('.')[1]
+    padded = payload_b64 + '=' * (-len(payload_b64) % 4)
+    return json.loads(base64.urlsafe_b64decode(padded))
+
+
 def serialize_user(user):
     return {
         'user_email': user.user_email,
         'user_name': user.user_name,
-        'user_first_name': user.user_first_name,
-        'user_last_name': user.user_last_name,
         'houses': list(user.houses.values_list('house_id', flat=True)),
         'administered_houses': list(user.administered_houses.values_list('house_id', flat=True)),
     }
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class WhoAmIView(View):
+    # the authenticated user's email, as the alb identified them
+    def get(self, request):
+        oidc_data = request.headers.get('X-Amzn-Oidc-Data')
+        if not oidc_data:
+            return JsonResponse({'error': 'not authenticated'}, status=401)
+        claims = decode_alb_oidc_data(oidc_data)
+        return JsonResponse({'email': claims['email']})
 
 
 def serialize_house(house):
@@ -64,15 +78,15 @@ class UsersView(View):
         missing = missing_fields(data, USER_REQUIRED_FIELDS)
         if missing:
             return JsonResponse({'error': f'missing required fields: {", ".join(missing)}'}, status=400)
+        if User.objects.filter(user_name=data['user_name']).exists():
+            return JsonResponse({'error': 'that username is already taken'}, status=409)
         try:
             user = User.objects.create(
                 user_email=data['user_email'],
                 user_name=data['user_name'],
-                user_first_name=data['user_first_name'],
-                user_last_name=data['user_last_name'],
             )
         except IntegrityError:
-            return JsonResponse({'error': 'a user with that email already exists'}, status=409)
+            return JsonResponse({'error': 'a user with that email or username already exists'}, status=409)
         return JsonResponse(serialize_user(user))
 @method_decorator(csrf_exempt, name='dispatch')
 class UserView(View):
