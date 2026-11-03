@@ -12,12 +12,14 @@
 </head>
 <body>
     <main class="screen">
-        <header class="brand">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3.5 12 12 4.5l8.5 7.5"/>
-                <circle cx="12" cy="16.5" r="1.8" fill="currentColor" stroke="none"/>
-            </svg>
-            roommate
+        <header>
+            <a class="brand" href="#/" aria-label="roommate, go to home">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3.5 12 12 4.5l8.5 7.5"/>
+                    <circle cx="12" cy="16.5" r="1.8" fill="currentColor" stroke="none"/>
+                </svg>
+                roommate
+            </a>
         </header>
 
         <section id="loading-view" class="view view-loading">
@@ -42,9 +44,41 @@
                 <p class="sub">good to have you home.</p>
             </div>
             <section class="houses" aria-labelledby="houses-title" aria-live="polite">
-                <h2 id="houses-title">your houses</h2>
+                <div id="houses-head" class="houses-head">
+                    <h2 id="houses-title">your houses</h2>
+                    <a id="add-house-link" class="add-link" href="#/new-house" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        add new house
+                    </a>
+                </div>
                 <p id="houses-message" class="sub" hidden></p>
+                <a id="add-house" class="add-house" href="#/new-house" hidden>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    add new house
+                </a>
                 <ul id="houses-list" class="tiles"></ul>
+            </section>
+        </section>
+
+        <section id="new-house-view" class="view" hidden>
+            <h1>name your<br><em>house</em></h1>
+            <form id="house-form" novalidate>
+                <label for="house-name" class="sr-only">house name</label>
+                <input id="house-name" type="text" autocomplete="off" spellcheck="false"
+                       maxlength="255" placeholder="house name" required>
+                <p id="house-error" class="error" role="alert"></p>
+                <button id="house-submit" type="submit">create house</button>
+            </form>
+        </section>
+
+        <section id="house-view" class="view view-welcome" hidden>
+            <h1 id="house-title"></h1>
+            <section class="houses">
+                <p id="house-message" class="sub" hidden></p>
+                <h2>admins</h2>
+                <ul id="house-admins" class="tiles"></ul>
+                <h2 class="spaced">users</h2>
+                <ul id="house-users" class="tiles"></ul>
             </section>
         </section>
     </main>

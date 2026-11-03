@@ -32,6 +32,8 @@ body {
     align-items: center;
     gap: 8px;
     align-self: flex-start;
+    color: inherit;
+    text-decoration: none;
     font-weight: 800;
     font-size: 1.1rem;
     letter-spacing: -0.02em;
@@ -166,13 +168,54 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
     overflow-wrap: anywhere;
 }
 
-/* shown instead of tiles when the user isn't in any houses */
-#houses-message {
-    padding: 22px;
+/* load errors, shown in place of the tiles */
+#houses-message { margin: 0 0 12px; }
+
+.houses-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.houses-head[hidden] { display: none; }
+.houses-head h2 { margin: 0; }
+
+/* text link opposite the heading, once the user has houses */
+.add-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+}
+.add-link[hidden] { display: none; }
+.add-link svg { width: 15px; height: 15px; flex: none; }
+.add-link:hover { text-decoration: underline; }
+
+/* a dashed empty slot, shown when the user has no houses */
+.add-house {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 18px;
+    font-weight: 700;
+    color: var(--muted);
+    text-decoration: none;
     border: 2px dashed var(--line);
     border-radius: 18px;
-    line-height: 1.5;
 }
+.add-house[hidden] { display: none; }
+.add-house svg { width: 18px; height: 18px; flex: none; }
+.add-house:hover { color: var(--accent); border-color: var(--accent); }
+
+.houses h2.spaced { margin-top: 28px; }
+
+#house-title { margin-bottom: 0; }
 
 .tile-head {
     display: flex;
@@ -194,6 +237,8 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
     border-radius: 999px;
 }
 
+.tile a { color: inherit; text-decoration: none; }
+.tile a:hover strong { color: var(--accent); }
 .tile strong { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
 .tile span { color: var(--muted); font-size: 0.9rem; }
 
@@ -203,15 +248,19 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
     .brand { font-size: 1.3rem; }
     .brand svg { width: 34px; height: 34px; }
 
-    #username-view {
+    #username-view,
+    #new-house-view {
         display: grid;
         grid-template-columns: 1.2fr 1fr;
         align-items: end;
         gap: 96px;
     }
-    #username-view[hidden] { display: none; }
-    #username-view h1 { margin: 0; }
-    #username-form { padding-bottom: 8px; max-width: 460px; }
+    #username-view[hidden],
+    #new-house-view[hidden] { display: none; }
+    #username-view h1,
+    #new-house-view h1 { margin: 0; }
+    #username-form,
+    #house-form { padding-bottom: 8px; max-width: 460px; }
 
     h1 { font-size: clamp(4.5rem, 9vw, 8rem); }
     .view-welcome h1 { font-size: clamp(4rem, 8vw, 7rem); }

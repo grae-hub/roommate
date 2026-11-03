@@ -15,11 +15,7 @@ USER_REQUIRED_FIELDS = [
     'user_name',
 ]
 HOUSE_REQUIRED_FIELDS = [
-    'house_street_address',
-    'house_suburb',
-    'house_postcode',
-    'house_state',
-    'house_country',
+    'house_name',
     'user_email'
 ]
 
@@ -38,8 +34,8 @@ def serialize_user(user):
     return {
         'user_email': user.user_email,
         'user_name': user.user_name,
-        'houses': list(user.houses.values_list('house_id', flat=True)),
-        'administered_houses': list(user.administered_houses.values_list('house_id', flat=True)),
+        'houses': list(user.houses.values_list('id', flat=True)),
+        'administered_houses': list(user.administered_houses.values_list('id', flat=True)),
     }
 
 
@@ -56,12 +52,8 @@ class WhoAmIView(View):
 
 def serialize_house(house):
     return {
-        'house_id': house.house_id,
-        'house_street_address': house.house_street_address,
-        'house_suburb': house.house_suburb,
-        'house_postcode': house.house_postcode,
-        'house_state': house.house_state,
-        'house_country': house.house_country,
+        'house_id': house.id,
+        'house_name': house.house_name,
         'house_users': list(house.house_users.values_list('user_email', flat=True)),
         'house_admins': list(house.house_admins.values_list('user_email', flat=True)),
     }
@@ -130,13 +122,10 @@ class HousesView(View):
         except User.DoesNotExist:
             return JsonResponse({'error': 'no user with that email exists'}, status=400)
 
-        house = House.objects.create(
-            house_street_address=data['house_street_address'],
-            house_suburb=data['house_suburb'],
-            house_postcode=data['house_postcode'],
-            house_state=data['house_state'],
-            house_country=data['house_country'],
-        )
+        try:
+            house = House.objects.create(house_name=data['house_name'])
+        except IntegrityError:
+            return JsonResponse({'error': 'that house name is already taken'}, status=409)
         house.house_users.add(user)
         house.house_admins.add(user)
         return JsonResponse(serialize_house(house))
@@ -144,12 +133,12 @@ class HousesView(View):
 class HouseUsersView(View):
     # list the regular users of a house
     def get(self, request, house_id):
-        house = get_object_or_404(House, house_id=house_id)
+        house = get_object_or_404(House, id=house_id)
         return JsonResponse({'users': [serialize_user(user) for user in house.house_users.all()]})
 
     # add a user to a house
     def post(self, request, house_id):
-        house = get_object_or_404(House, house_id=house_id)
+        house = get_object_or_404(House, id=house_id)
         data = json.loads(request.body)
         missing = missing_fields(data, ['user_email'])
         if missing:
@@ -164,12 +153,12 @@ class HouseUsersView(View):
 class HouseAdminsView(View):
     # list the admins of a house
     def get(self, request, house_id):
-        house = get_object_or_404(House, house_id=house_id)
+        house = get_object_or_404(House, id=house_id)
         return JsonResponse({'users': [serialize_user(user) for user in house.house_admins.all()]})
 
     # add a user to a house as an admin (and as a user, if not one already)
     def post(self, request, house_id):
-        house = get_object_or_404(House, house_id=house_id)
+        house = get_object_or_404(House, id=house_id)
         data = json.loads(request.body)
         missing = missing_fields(data, ['user_email'])
         if missing:
@@ -185,11 +174,11 @@ class HouseAdminsView(View):
 class HouseView(View):
     # look up a house by id
     def get(self, request, house_id):
-        house = get_object_or_404(House, house_id=house_id)
+        house = get_object_or_404(House, id=house_id)
         return JsonResponse(serialize_house(house))
 
     # delete a house by id
     def delete(self, request, house_id):
-        house = get_object_or_404(House, house_id=house_id)
+        house = get_object_or_404(House, id=house_id)
         house.delete()
         return JsonResponse({'deleted': house_id})

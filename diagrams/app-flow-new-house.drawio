@@ -1,0 +1,44 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="ZYg5vbN_6uMY_2RxlMmL">
+    <mxGraphModel dx="1414" dy="761" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-5" edge="1" parent="1" source="GX16n1pTpjY3CcMFyLJM-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;" target="GX16n1pTpjY3CcMFyLJM-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-7" edge="1" parent="1" source="GX16n1pTpjY3CcMFyLJM-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;defaultLabelBackgroundColor=page;dashed=1;" target="GX16n1pTpjY3CcMFyLJM-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-8" connectable="0" parent="GX16n1pTpjY3CcMFyLJM-7" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];inheritText=1;defaultLabelBackgroundColor=page;" value="create new house&lt;div&gt;with creating user&lt;/div&gt;&lt;div&gt;as admin&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.0545" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9a93b8;fontColor=#1e1a2e;" value="form for new house" vertex="1">
+          <mxGeometry height="40" width="120" x="260" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-3" edge="1" parent="1" source="GX16n1pTpjY3CcMFyLJM-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;" target="GX16n1pTpjY3CcMFyLJM-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9a93b8;fontColor=#1e1a2e;" value="user selects &#39;+ add new house&#39; on welcome page" vertex="1">
+          <mxGeometry height="70" width="140" x="60" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9a93b8;fontColor=#1e1a2e;" value="house page" vertex="1">
+          <mxGeometry height="40" width="120" x="260" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-9" edge="1" parent="1" source="GX16n1pTpjY3CcMFyLJM-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;dashed=1;" target="GX16n1pTpjY3CcMFyLJM-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-10" connectable="0" parent="GX16n1pTpjY3CcMFyLJM-9" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];inheritText=1;defaultLabelBackgroundColor=page;" value="read new house" vertex="1">
+          <mxGeometry relative="1" x="0.4389" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GX16n1pTpjY3CcMFyLJM-6" parent="1" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e1a2e;" value="houses" vertex="1">
+          <mxGeometry height="50" width="140" x="600" y="200" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

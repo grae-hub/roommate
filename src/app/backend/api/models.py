@@ -10,12 +10,7 @@ class User(models.Model):
 
 
 class House(models.Model):
-    house_id = models.AutoField(primary_key=True)
-    house_street_address = models.CharField(max_length=255)
-    house_suburb = models.CharField(max_length=255)
-    house_postcode = models.CharField(max_length=20)
-    house_state = models.CharField(max_length=255)
-    house_country = models.CharField(max_length=255)
+    house_name = models.CharField(max_length=255, unique=True)
     house_users = models.ManyToManyField(User, related_name='houses')
     house_admins = models.ManyToManyField(User, related_name='administered_houses')
 
